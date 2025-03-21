@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Precios de la luz - <%= currentDate %></title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background-color: white;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            table {
+                border-collapse: collapse;
+                margin: 20px auto;
+                width: 100%;
+            }
+            th,
+            td {
+                padding: 12px;
+                text-align: left;
+                width: 50%;
+                &:first-child {
+                    text-align: right;
+                }
+            }
+            th {
+                border-bottom: 1px solid #ddd;
+                background-color: #f8f9fa;
+            }
+            .low {
+                background-color: rgba(87, 200, 87, 0.2);
+            }
+            .medium {
+                background-color: rgba(255, 193, 7, 0.2);
+            }
+            .high {
+                background-color: rgba(220, 53, 69, 0.2);
+            }
+            .chart-container {
+                margin-top: 30px;
+                height: 400px;
+            }
+            @media(max-width: 600px) {
+                body {
+                    padding: 10px;
+                }
+                th,
+                td {
+                    padding: 8px;
+                }
+                .chart-container {
+                    height: 300px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Precios de la luz en España</h1>
+            <p>Fecha: <%= currentDate %></p>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Precio (€/kWh)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% prices.forEach(function(price) { %>
+                        <tr class="<%= price.range %>">
+                            <td><%= price.hour %>:00</td>
+                            <td><%= price.kwh.toFixed(4) %> €</td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+        <script>
+            const ctx = document.getElementById('priceChart');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: <%- JSON.stringify(prices.map(p => p.hour + ':00')) %>,
+                    datasets: [
+                        {
+                            label: 'Precio (€/kWh)',
+                            data: <%- JSON.stringify(prices.map(p => p.kwh)) %>,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toFixed(4) + ' €';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

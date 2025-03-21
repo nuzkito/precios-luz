@@ -1,0 +1,14 @@
+{
+  "name": "precio-luz",
+  "version": "1.0.0",
+  "description": "Precios de la electricidad en España para hoy",
+  "type": "module",
+  "scripts": {
+    "update": "node updatePrices.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "dayjs": "^1.11.10",
+    "ejs": "^3.1.10"
+  }
+}

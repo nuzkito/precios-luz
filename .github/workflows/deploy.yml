@@ -1,0 +1,59 @@
+name: Daily Price Update
+
+on:
+  schedule:
+    # 00:00 Europe/Madrid (22:00 UTC in winter, 23:00 UTC in summer)
+    - cron: '0 22,23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check Europe/Madrid time
+        id: madrid-time
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+          hour=$(TZ=Europe/Madrid date +%H)
+          if [ "$hour" = "00" ]; then
+            exit 0
+          else
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update prices and generate HTML
+        run: npm run update
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: |
+            index.html
+            CNAME
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
