@@ -7,12 +7,12 @@ import ejs from 'ejs'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
-dayjs.tz.setDefault('Europe/Madrid')
 
 async function getPrices() {
-    const today = dayjs()
+    const today = dayjs().tz('Europe/Madrid')
     const startDate = today.format('YYYY-MM-DD')
     const endDate = today.add(1, 'day').format('YYYY-MM-DD')
+    console.log(startDate, endDate)
     const url = `https://apidatos.ree.es/es/datos/mercados/precios-mercados-tiempo-real?start_date=${startDate}T00:00&end_date=${endDate}T00:00&time_trunc=hour`
 
     try {
@@ -25,7 +25,7 @@ async function getPrices() {
 }
 
 function processData(rawData) {
-    const today = dayjs()
+    const today = dayjs().tz('Europe/Madrid')
     const pvpcData = rawData.included.find(item => item.type === 'PVPC')
 
     if (!pvpcData) {
@@ -70,7 +70,7 @@ function range(kwh, thresholds) {
 }
 
 async function generateHtml(prices) {
-    const today = dayjs()
+    const today = dayjs().tz('Europe/Madrid')
 
     try {
         const template = await fs.readFile('template.html', 'utf8')
