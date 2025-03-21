@@ -1,9 +1,11 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc.js'
 import timezone from 'dayjs/plugin/timezone.js'
 import fs from 'fs/promises'
 import ejs from 'ejs'
 
+dayjs.extend(utc)
 dayjs.extend(timezone)
 dayjs.tz.setDefault('Europe/Madrid')
 
@@ -31,7 +33,7 @@ function processData(rawData) {
     }
 
     const prices = pvpcData.attributes.values.map(item => {
-        const datetime = dayjs(item.datetime)
+        const datetime = dayjs(item.datetime).tz('Europe/Madrid')
         if (datetime.format('YYYY-MM-DD') === today.format('YYYY-MM-DD')) {
             return {
                 hour: datetime.format('HH'),
