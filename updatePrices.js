@@ -1,7 +1,11 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone.js'
 import fs from 'fs/promises'
 import ejs from 'ejs'
+
+dayjs.extend(timezone)
+dayjs.tz.setDefault('Europe/Madrid')
 
 async function getPrices() {
     const today = dayjs()
