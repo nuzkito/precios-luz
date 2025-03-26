@@ -8,6 +8,8 @@ import ejs from 'ejs'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
+const url = process.env.url ?? 'http://localhost:3000/_site'
+
 async function getPrices() {
     const today = dayjs().tz('Europe/Madrid')
     const startDate = today.format('YYYY-MM-DD')
@@ -76,10 +78,12 @@ async function generateHtml(prices) {
         const template = await fs.readFile('template.html', 'utf8')
         const html = ejs.render(template, {
             prices: prices,
-            currentDate: today.format('DD/MM/YYYY')
+            currentDate: today.format('DD/MM/YYYY'),
+            url: url,
         })
-
-        await fs.writeFile('index.html', html)
+        await fs.mkdir('_site', { recursive: true })
+        await fs.writeFile('_site/index.html', html)
+        await fs.cp('resources', '_site', { recursive: true })
         console.log('HTML generated successfully')
     } catch (error) {
         console.error('Error generating HTML:', error.message)

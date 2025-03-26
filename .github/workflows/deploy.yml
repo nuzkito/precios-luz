@@ -42,16 +42,12 @@ jobs:
         run: npm ci
 
       - name: Update prices and generate HTML
+        env:
+          url: https://precioluz.nuzkito.es
         run: npm run update
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
-
-      - name: Prepare deployment files
-        run: |
-          mkdir _site
-          cp index.html _site/
-          cp CNAME _site/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
