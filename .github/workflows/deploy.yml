@@ -5,6 +5,9 @@ on:
     # 00:00 Europe/Madrid (22:00 UTC in winter, 23:00 UTC in summer)
     - cron: '0 22,23 * * *'
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -12,11 +15,10 @@ permissions:
   id-token: write
 
 jobs:
-  update-prices:
+  check-time:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      should-run: ${{ steps.madrid-time.outputs.should-run }}
 
     steps:
       - name: Check Europe/Madrid time
@@ -25,11 +27,20 @@ jobs:
         run: |
           hour=$(TZ=Europe/Madrid date +%H)
           if [ "$hour" = "00" ]; then
-            exit 0
+            echo "should-run=true" >> $GITHUB_OUTPUT
           else
-            exit 1
+            echo "should-run=false" >> $GITHUB_OUTPUT
           fi
 
+  update-prices:
+    needs: check-time
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || needs.check-time.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
