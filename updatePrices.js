@@ -79,6 +79,7 @@ async function generateHtml(prices) {
         const html = ejs.render(template, {
             prices: prices,
             currentDate: today.format('DD/MM/YYYY'),
+            currentTime: today.format('HH:mm'),
             url: url,
         })
         await fs.mkdir('_site', { recursive: true })
