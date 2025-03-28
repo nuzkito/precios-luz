@@ -206,30 +206,56 @@
                 });
             }
             const prices = <%- JSON.stringify(prices) %>;
+            function updateUrl(region) {
+                const url = new URL(window.location);
+                if (region === 'peninsula') {
+                    url.searchParams.delete('de');
+                } else if (region === 'canarias') {
+                    url.searchParams.set('de', 'canarias');
+                } else if (region === 'ceutaMelilla') {
+                    url.searchParams.set('de', 'ceutaymelilla');
+                }
+                window.history.pushState({}, '', url);
+            }
+            function switchRegion(region) {
+                document.querySelectorAll('.region-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document
+                    .querySelector(`[data-region="${region}"]`)
+                    .classList
+                    .add('active');
+                document.querySelectorAll('.price-table').forEach(table => {
+                    table.classList.remove('active');
+                });
+                document
+                    .getElementById(`${region}Table`)
+                    .classList
+                    .add('active');
+                document.querySelectorAll('.chart-container').forEach(chart => {
+                    chart.classList.remove('active');
+                });
+                document
+                    .getElementById(`${region}Chart`)
+                    .classList
+                    .add('active');
+                updateUrl(region);
+            }
             createChart(document.getElementById('priceChartPeninsula'), prices.peninsula);
             createChart(document.getElementById('priceChartCanarias'), prices.canarias);
             createChart(document.getElementById('priceChartCeutaMelilla'), prices.ceutaMelilla);
+            const urlParams = new URLSearchParams(window.location.search);
+            const regionParam = urlParams.get('de');
+            let initialRegion = 'peninsula';
+            if (regionParam === 'canarias') {
+                initialRegion = 'canarias';
+            } else if (regionParam === 'ceutaymelilla') {
+                initialRegion = 'ceutaMelilla';
+            }
+            switchRegion(initialRegion);
             document.querySelectorAll('.region-button').forEach(button => {
                 button.addEventListener('click', () => {
-                    const region = button.dataset.region;
-                    document.querySelectorAll('.region-button').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    button.classList.add('active');
-                    document.querySelectorAll('.price-table').forEach(table => {
-                        table.classList.remove('active');
-                    });
-                    document
-                        .getElementById(`${region}Table`)
-                        .classList
-                        .add('active');
-                    document.querySelectorAll('.chart-container').forEach(chart => {
-                        chart.classList.remove('active');
-                    });
-                    document
-                        .getElementById(`${region}Chart`)
-                        .classList
-                        .add('active');
+                    switchRegion(button.dataset.region);
                 });
             });
         </script>
