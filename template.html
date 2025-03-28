@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Precios de la luz - <%= currentDate %></title>
+        <title>Precios de la luz - <%= currentDateTime.format('DD/MM/YYYY') %></title>
         <link rel="shortcut icon" href="<%= url %>/favicon.ico">
         <link rel="apple-touch-icon" sizes="180x180" href="<%= url %>/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="<%= url %>/favicon-32x32.png">
@@ -52,8 +52,36 @@
                 background-color: rgba(220, 53, 69, 0.2);
             }
             .chart-container {
+                display: none;
                 margin-top: 30px;
                 height: 400px;
+            }
+            .chart-container.active {
+                display: block;
+            }
+            .region-selector {
+                display: flex;
+                gap: 10px;
+                margin: 20px 0;
+                justify-content: center;
+            }
+            .region-button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+                cursor: pointer;
+                font-size: 1em;
+            }
+            .region-button.active {
+                background-color: #2563eb;
+                color: white;
+            }
+            .price-table {
+                display: none;
+            }
+            .price-table.active {
+                display: table;
             }
             @media(max-width: 600px) {
                 body {
@@ -72,11 +100,22 @@
     <body>
         <div class="container">
             <h1>Precios de la luz en España</h1>
-            <p>Fecha: <%= currentDate %> (Actualizado a las <%= currentTime %>)</p>
-            <div class="chart-container">
-                <canvas id="priceChart"></canvas>
+            <p>Fecha: <%= currentDateTime.format('DD/MM/YYYY') %> (Actualizado a las <%= currentDateTime.format('HH:mm') %>)</p>
+            <div class="region-selector">
+                <button class="region-button active" data-region="peninsula">Península y Baleares</button>
+                <button class="region-button" data-region="canarias">Canarias</button>
+                <button class="region-button" data-region="ceutaMelilla">Ceuta y Melilla</button>
             </div>
-            <table>
+            <div id="peninsulaChart" class="chart-container active">
+                <canvas id="priceChartPeninsula"></canvas>
+            </div>
+            <div id="canariasChart" class="chart-container">
+                <canvas id="priceChartCanarias"></canvas>
+            </div>
+            <div id="ceutaMelillaChart" class="chart-container">
+                <canvas id="priceChartCeutaMelilla"></canvas>
+            </div>
+            <table id="peninsulaTable" class="price-table active">
                 <thead>
                     <tr>
                         <th>Hora</th>
@@ -84,7 +123,39 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <% prices.forEach(function(price) { %>
+                    <% prices.peninsula.forEach(function(price) { %>
+                        <tr class="<%= price.range %>">
+                            <td><%= price.hour %>:00</td>
+                            <td><%= price.kwh.toFixed(4) %> €</td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <table id="canariasTable" class="price-table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Precio (€/kWh)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% prices.canarias.forEach(function(price) { %>
+                        <tr class="<%= price.range %>">
+                            <td><%= price.hour %>:00</td>
+                            <td><%= price.kwh.toFixed(4) %> €</td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <table id="ceutaMelillaTable" class="price-table">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Precio (€/kWh)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% prices.ceutaMelilla.forEach(function(price) { %>
                         <tr class="<%= price.range %>">
                             <td><%= price.hour %>:00</td>
                             <td><%= price.kwh.toFixed(4) %> €</td>
@@ -97,41 +168,69 @@
             </p>
         </div>
         <script>
-            const ctx = document.getElementById('priceChart');
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: <%- JSON.stringify(prices.map(p => p.hour + ':00')) %>,
-                    datasets: [
-                        {
-                            label: 'Precio (€/kWh)',
-                            data: <%- JSON.stringify(prices.map(p => p.kwh)) %>,
-                            borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+            function createChart(ctx, prices, region) {
+                return new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: prices.map(p => p.hour + ':00'),
+                        datasets: [
+                            {
+                                label: 'Precio (€/kWh)',
+                                data: prices.map(p => p.kwh),
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function (value) {
-                                    return value.toFixed(4) + ' €';
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function (value) {
+                                        return value.toFixed(4) + ' €';
+                                    }
                                 }
                             }
                         }
                     }
-                }
+                });
+            }
+            const prices = <%- JSON.stringify(prices) %>;
+            createChart(document.getElementById('priceChartPeninsula'), prices.peninsula);
+            createChart(document.getElementById('priceChartCanarias'), prices.canarias);
+            createChart(document.getElementById('priceChartCeutaMelilla'), prices.ceutaMelilla);
+            document.querySelectorAll('.region-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const region = button.dataset.region;
+                    document.querySelectorAll('.region-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    button.classList.add('active');
+                    document.querySelectorAll('.price-table').forEach(table => {
+                        table.classList.remove('active');
+                    });
+                    document
+                        .getElementById(`${region}Table`)
+                        .classList
+                        .add('active');
+                    document.querySelectorAll('.chart-container').forEach(chart => {
+                        chart.classList.remove('active');
+                    });
+                    document
+                        .getElementById(`${region}Chart`)
+                        .classList
+                        .add('active');
+                });
             });
         </script>
     </body>
