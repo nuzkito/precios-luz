@@ -1,4 +1,3 @@
-import axios from 'axios'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc.js'
 import timezone from 'dayjs/plugin/timezone.js'
@@ -57,8 +56,13 @@ async function getPrices(geoId) {
     const url = `https://apidatos.ree.es/es/datos/mercados/precios-mercados-tiempo-real?start_date=${startDate}T00:00&end_date=${endDate}T00:00&time_trunc=hour&geo_ids=${geoId.value()}`
 
     try {
-        const response = await axios.get(url)
-        return response.data
+        const response = await fetch(url)
+
+        if (!response.ok) {
+            throw new Error(`Request failed with status code ${response.status}`)
+        }
+
+        return await response.json()
     } catch (error) {
         console.error('Error downloading data:', error.message)
         process.exit(1)
