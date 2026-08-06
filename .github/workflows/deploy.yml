@@ -8,9 +8,13 @@ on:
   push:
     branches:
       - main
+    # The workflow itself commits the prices of the day: without this, that
+    # commit would trigger another run.
+    paths-ignore:
+      - 'data/**'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -49,13 +53,18 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Update prices and generate HTML
-        env:
-          url: https://precioluz.nuzkito.es
+      - name: Update prices and build the site
         run: npm run update
+
+      - name: Commit new data files
+        run: |
+          # Identity of the bot account behind GITHUB_TOKEN. The user id in the
+          # noreply address is what makes GitHub attribute the commit to it.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --staged --quiet || git commit -m "Add prices for $(TZ=Europe/Madrid date +%F)"
+          git push
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

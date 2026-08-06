@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Precios de la luz en España</title>
+        <link rel="shortcut icon" href="favicon.ico">
+        <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+        <link rel="manifest" href="site.webmanifest">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
+            }
+            .container {
+                background-color: white;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+            table {
+                border-collapse: collapse;
+                margin: 20px auto;
+                width: 100%;
+            }
+            th,
+            td {
+                padding: 0.75em 1em;
+                text-align: left;
+                width: 50%;
+                &:first-child {
+                    text-align: right;
+                }
+            }
+            th {
+                border-bottom: 1px solid #ddd;
+                background-color: #f8f9fa;
+            }
+            .low {
+                background-color: rgba(87, 200, 87, 0.2);
+            }
+            .medium {
+                background-color: rgba(255, 193, 7, 0.2);
+            }
+            .high {
+                background-color: rgba(220, 53, 69, 0.2);
+            }
+            .chart-container {
+                margin-top: 30px;
+                height: 400px;
+            }
+            .region-selector {
+                display: flex;
+                gap: 10px;
+                margin: 20px 0;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .region-button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+                cursor: pointer;
+                font-size: 1em;
+            }
+            .region-button.active {
+                background-color: #2563eb;
+                color: white;
+            }
+            .day-selector {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+            .day-button {
+                padding: 4px 12px;
+                border: none;
+                border-radius: 4px;
+                background-color: #f8f9fa;
+                cursor: pointer;
+                font-size: 1em;
+            }
+            .day-button:disabled {
+                opacity: 0.4;
+                cursor: default;
+            }
+            .day-selector input {
+                padding: 4px 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 1em;
+                font-family: inherit;
+            }
+            .error {
+                color: #dc3545;
+            }
+            @media(max-width: 600px) {
+                body {
+                    padding: 10px;
+                }
+                th,
+                td {
+                    padding: 8px;
+                }
+                .chart-container {
+                    height: 300px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Precios de la luz en España</h1>
+            <p id="dayInfo">Cargando los precios…</p>
+            <div class="day-selector">
+                <button type="button" id="previousDay" class="day-button" title="Día anterior" disabled>‹</button>
+                <input type="date" id="daySelector">
+                <button type="button" id="nextDay" class="day-button" title="Día siguiente" disabled>›</button>
+            </div>
+            <p id="dayError" class="error" hidden>No hay precios guardados para ese día.</p>
+            <div class="region-selector" id="regionSelector"></div>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+            <table id="priceTable">
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Precio (€/kWh)</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <p>Fuente:
+                <a href="https://www.ree.es/">Red Eléctrica</a>
+            </p>
+        </div>
+        <script type="module" src="page.js"></script>
+    </body>
+</html>
