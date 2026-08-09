@@ -1,4 +1,9 @@
 const mainlandTimeZone = 'Europe/Madrid'
+const anHour = 60 * 60 * 1000
+
+// The chart never reaches less than this price, so that a cheap day is drawn
+// low and an expensive one high instead of every day filling the same height.
+const minimumTop = 0.4
 
 const regions = [
     { id: 'peninsula', label: 'Península', timeZone: mainlandTimeZone },
@@ -8,10 +13,28 @@ const regions = [
     { id: 'melilla', label: 'Melilla', timeZone: mainlandTimeZone }
 ]
 
+// What the page can be shown as: the chart, the table, or both of them.
+const views = [
+    { id: 'both', chart: true, table: true },
+    { id: 'chart', chart: true, table: false },
+    { id: 'table', chart: false, table: true }
+]
+
+const themes = [
+    { id: 'auto', label: 'Auto' },
+    { id: 'light', label: 'Claro' },
+    { id: 'dark', label: 'Oscuro' }
+]
+
+const levelNames = {
+    low: 'Hora barata',
+    medium: 'Hora media',
+    high: 'Hora cara'
+}
+
 const defaultRegion = regions[0]
 const defaultDate = today()
 const loadedDays = new Map()
-const regionButtons = new Map()
 
 // The days of the history, the day being shown —kept whole, so that changing
 // region does not ask for it again—, its region, and when the site was built.
@@ -26,77 +49,125 @@ const daySelector = document.getElementById('daySelector')
 const previousDay = document.getElementById('previousDay')
 const nextDay = document.getElementById('nextDay')
 const regionSelector = document.getElementById('regionSelector')
-const tableBody = document.querySelector('#priceTable tbody')
-const chart = createChart(document.getElementById('priceChart'))
+const viewButtons = [...document.getElementById('viewSelector').children]
+const themeButton = document.getElementById('themeButton')
+const themeLabel = document.getElementById('themeLabel')
+const chartSection = document.getElementById('chartSection')
+const tableSection = document.getElementById('tableSection')
+const chartRegion = document.getElementById('chartRegion')
+const tableRegion = document.getElementById('tableRegion')
+const chartLine = document.getElementById('chartLine')
+const chartArea = document.getElementById('chartArea')
+const chartDots = document.getElementById('chartDots')
+const hourLabels = document.getElementById('hourLabels')
+const nowLine = document.getElementById('nowLine')
+const nowLegend = document.getElementById('nowLegend')
+const yMax = document.getElementById('yMax')
+const yMid = document.getElementById('yMid')
+const nowPanel = document.getElementById('nowPanel')
+const nowRange = document.getElementById('nowRange')
+const nowPrice = document.getElementById('nowPrice')
+const nowLevel = document.getElementById('nowLevel')
+const priceTable = document.getElementById('priceTable')
 
-// The table and the chart are the same ones for every region, so changing region
-// only repaints them.
 function buildRegions() {
-    regions.forEach(region => {
-        const button = document.createElement('button')
-        button.type = 'button'
-        button.className = 'region-button'
-        button.textContent = region.label
-        button.addEventListener('click', () => goToRegion(region))
-
-        regionButtons.set(region.id, button)
-        regionSelector.append(button)
-    })
+    regionSelector.innerHTML = regions
+        .map(region => `<option value="${region.id}">${region.label}</option>`)
+        .join('')
 }
 
-function createChart(canvas) {
-    return new Chart(canvas, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Precio (€/kWh)',
-                    data: [],
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: value => formatPrice(value)
-                    }
-                }
-            }
-        }
-    })
-}
-
-// The prices of the day being shown, in the selected region. It is called both
-// when the day changes and when the region does, so until a day is loaded there
-// is nothing to draw.
+// The chart and the table are the same ones for every region, so changing region
+// only repaints them.
 function renderPrices() {
     if (currentDay === null) {
         return
     }
 
-    const prices = priceRows(currentDay, currentRegion)
+    const rows = priceRows(currentDay, currentRegion)
 
-    tableBody.innerHTML = prices
-        .map(price => `<tr class="${price.level}"><td>${price.hour}:00</td><td>${formatPrice(price.kwh)}</td></tr>`)
+    renderNow(rows)
+    renderChart(rows)
+    renderTable(rows)
+}
+
+// The price of the hour being lived, which only exists while the day shown is
+// the one going on.
+function renderNow(rows) {
+    const row = rows.find(row => row.isNow)
+
+    nowPanel.hidden = row === undefined
+
+    if (row === undefined) {
+        return
+    }
+
+    nowRange.textContent = row.range
+    nowPrice.textContent = formatPrice(row.kwh)
+    nowLevel.textContent = levelNames[row.level]
+    nowLevel.className = `badge ${row.level}`
+}
+
+// The chart is a line drawn inside a square that is stretched to the size of its
+// container, with a dot over the price of each hour. Prices are measured against
+// a top that leaves some room above the highest one, which is also what the two
+// labels of the grid say.
+function renderChart(rows) {
+    const top = Math.max(Math.max(...rows.map(row => row.kwh)) / 0.92, minimumTop)
+    const left = index => (index + 0.5) / rows.length * 100
+    const height = kwh => kwh / top * 100
+
+    const points = rows.map((row, index) => `${left(index).toFixed(2)} ${(100 - height(row.kwh)).toFixed(2)}`)
+    const line = `M ${points.join(' L ')}`
+
+    chartLine.setAttribute('d', line)
+    chartArea.setAttribute('d', `${line} L ${left(rows.length - 1).toFixed(2)} 100 L ${left(0).toFixed(2)} 100 Z`)
+
+    yMax.textContent = formatPrice(top)
+    yMid.textContent = formatPrice(top / 2)
+
+    chartDots.innerHTML = rows
+        .map((row, index) => `<div class="dot ${row.level}${row.isNow ? ' now' : ''}" title="${row.range} · ${formatPrice(row.kwh)} €/kWh" style="left: ${left(index)}%; bottom: ${height(row.kwh)}%"></div>`)
         .join('')
 
-    chart.data.labels = prices.map(price => `${price.hour}:00`)
-    chart.data.datasets[0].data = prices.map(price => price.kwh)
-    chart.update()
+    // One label every three hours, so that they do not pile up on a narrow
+    // screen.
+    hourLabels.innerHTML = rows
+        .map((row, index) => `<span class="${row.isNow ? 'now' : ''}">${index % 3 === 0 ? row.hour : ''}</span>`)
+        .join('')
+
+    renderNowLine(rows, left)
+}
+
+function renderNowLine(rows, left) {
+    const index = rows.findIndex(row => row.isNow)
+
+    nowLine.hidden = index < 0
+    nowLegend.textContent = index < 0 ? '' : `Línea discontinua = hora actual (${rows[index].hour}:00)`
+
+    if (index >= 0) {
+        nowLine.style.left = `${left(index)}%`
+    }
+}
+
+// The hours are read in two columns, the first half of the day next to the
+// second one.
+function renderTable(rows) {
+    const half = Math.ceil(rows.length / 2)
+
+    priceTable.innerHTML = [rows.slice(0, half), rows.slice(half)]
+        .map(column => `<div class="table-column">${tableHead()}${column.map(tableRow).join('')}</div>`)
+        .join('')
+}
+
+function tableHead() {
+    return '<div class="table-head"><span>Hora</span><span>€/kWh</span></div>'
+}
+
+function tableRow(row) {
+    return `<div class="table-row ${row.level}${row.isNow ? ' now' : ''}">`
+        + `<span class="hour">${row.range}${row.isNow ? ' · ahora' : ''}</span>`
+        + `<span class="price">${formatPrice(row.kwh)}</span>`
+        + '</div>'
 }
 
 // What depends on the day and not on the region.
@@ -202,15 +273,66 @@ function showDayError() {
 
 function selectRegion(region) {
     currentRegion = region
+    regionSelector.value = region.id
+    chartRegion.textContent = region.label
+    tableRegion.textContent = region.label
 
-    regionButtons.forEach((button, id) => {
-        const selected = id === region.id
+    renderPrices()
+}
+
+// Whether the chart, the table or both are shown. It is a way of reading the
+// same day, so it is kept in the browser and not in the url, which only records
+// which prices are being shown.
+function selectView(id) {
+    const view = views.find(view => view.id === id) ?? views[0]
+
+    chartSection.hidden = !view.chart
+    tableSection.hidden = !view.table
+
+    viewButtons.forEach(button => {
+        const selected = button.dataset.view === view.id
 
         button.classList.toggle('active', selected)
         button.setAttribute('aria-pressed', selected)
     })
 
-    renderPrices()
+    remember('vista', view.id)
+}
+
+// `auto` follows the system, which is where the page starts. The choice is
+// applied by the small script of the page before it is painted, so that a dark
+// page is never shown light first.
+function selectTheme(id) {
+    const theme = themes.find(theme => theme.id === id) ?? themes[0]
+
+    document.documentElement.dataset.theme = theme.id
+    themeLabel.textContent = theme.label
+
+    remember('tema', theme.id)
+}
+
+function cycleTheme() {
+    const index = themes.findIndex(theme => theme.id === document.documentElement.dataset.theme)
+
+    selectTheme(themes[(index + 1) % themes.length].id)
+}
+
+// The theme and the view are remembered between visits. A browser that refuses
+// to store them just forgets them, and the page opens with its defaults.
+function remember(key, value) {
+    try {
+        localStorage.setItem(key, value)
+    } catch {
+        // Nothing to do: the choice only lasts for this visit.
+    }
+}
+
+function remembered(key) {
+    try {
+        return localStorage.getItem(key)
+    } catch {
+        return null
+    }
 }
 
 // Today is the day shown by default, but its prices may not be published yet:
@@ -275,12 +397,24 @@ function findRegion(id) {
 function priceRows(day, region) {
     const prices = day.prices[region.id]
     const thresholds = calculateThresholds(prices)
+    const now = Date.now()
 
-    return prices.map((kwh, index) => ({
-        hour: formatHour(day.datetimes[index], region.timeZone),
-        kwh,
-        level: level(kwh, thresholds)
-    }))
+    return prices.map((kwh, index) => {
+        const start = new Date(day.datetimes[index])
+        const end = new Date(start.getTime() + anHour)
+        const hour = formatHour(start, region.timeZone)
+
+        return {
+            hour,
+            range: `${hour}:00–${formatHour(end, region.timeZone)}:00`,
+            kwh,
+            level: level(kwh, thresholds),
+            // Every price covers one real hour, so the one being lived is found
+            // by the instant it started and not by the date of the day, which
+            // the Canary Islands do not share with the rest.
+            isNow: now >= start.getTime() && now < end.getTime()
+        }
+    })
 }
 
 // The current day in mainland time, which is the day the page shows by default
@@ -314,17 +448,17 @@ function formatTime(instant) {
 }
 
 function formatPrice(kwh) {
-    return `${kwh.toFixed(4)} €`
+    return kwh.toFixed(4).replace('.', ',')
 }
 
 // Prices are stored in mainland time. The Canary Islands show those same hours
 // in their own time zone, so their table starts at 23:00 of the previous day.
-function formatHour(datetime, timeZone) {
+function formatHour(instant, timeZone) {
     return new Intl.DateTimeFormat('es-ES', {
         hour: '2-digit',
         hourCycle: 'h23',
         timeZone
-    }).format(new Date(datetime))
+    }).format(instant)
 }
 
 function calculateThresholds(prices) {
@@ -348,9 +482,19 @@ function level(kwh, thresholds) {
 daySelector.addEventListener('change', () => goToDay(daySelector.value))
 previousDay.addEventListener('click', () => goToDay(neighbourDate(-1)))
 nextDay.addEventListener('click', () => goToDay(neighbourDate(1)))
+regionSelector.addEventListener('change', () => goToRegion(findRegion(regionSelector.value)))
+viewButtons.forEach(button => button.addEventListener('click', () => selectView(button.dataset.view)))
+themeButton.addEventListener('click', cycleTheme)
 window.addEventListener('popstate', applyUrl)
 
+// The hour being lived changes while the page is open, so whatever marks it is
+// repainted every minute.
+setInterval(renderPrices, 60 * 1000)
+
 buildRegions()
+selectRegion(currentRegion)
+selectView(remembered('vista') ?? views[0].id)
+selectTheme(remembered('tema') ?? themes[0].id)
 
 const site = await loadSite()
 
