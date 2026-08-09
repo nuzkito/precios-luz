@@ -4,3 +4,11 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+
+  server:
+    image: busybox:uclibc
+    command: httpd -f -v -p 3000 -h /site
+    volumes:
+      - ./_site:/site:ro
+    ports:
+      - '3000:3000'
