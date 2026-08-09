@@ -2,7 +2,7 @@
 
 El precio de la luz en España cambia cada hora. La REE —Red Eléctrica de España— publica los datos cada día a las 21:00. Este proyecto descarga esos datos, los guarda en el histórico y publica una web para consultar los precios.
 
-Todos los días a las 00:00 descarga los precios desde la API de la REE, los guarda en `data/<YYYY>/<MM>/<DD>.json` y publica una web estática que los muestra. En la web se pueden consultar los precios de un día concreto.
+Todos los días a las 21:00 se descargan los precios del próximo día desde la API de la REE, los guarda en `data/<YYYY>/<MM>/<DD>.json` y publica una web estática que los muestra. En la web se pueden consultar los precios de un día concreto.
 
 **La web publicada está en https://precioluz.nuzkito.es**. El histórico se guarda en [`data/`](data/). La documentación de la API de REE está en https://www.ree.es/es/datos/apidatos.
 
@@ -12,18 +12,29 @@ El entorno de desarrollo utiliza Docker con Compose: Node se ejecuta dentro del 
 
 ### Descargar precios y construir la web
 
-Para probar la web en local, descarga los precios de hoy y construye el sitio en `_site`:
+Para probar la web en local, descarga los precios de hoy y de mañana (si están disponibles) y construye el sitio en `_site`:
 
 ```sh
 docker compose run --rm node npm run update
 ```
 
-Termina con dos líneas que dicen que el día se ha guardado y cuántos hay ya en el histórico:
+Termina diciendo qué días se han guardado y cuántos hay ya en el histórico:
 
 ```
 Prices for 2026-08-02 saved
+Prices for 2026-08-03 saved
+Site built (10 days in the history)
+```
+
+Antes de las 21:00 los precios de mañana todavía no existen, así que solo se guarda el día de hoy y se avisa de que faltan:
+
+```
+Prices for 2026-08-02 saved
+Prices for 2026-08-03 are not published yet (The prices of 2026-08-03 have 0 hours)
 Site built (9 days in the history)
 ```
+
+Si falla la descarga del día de hoy se cancela la ejecución.
 
 ### Ver la web en el navegador
 
@@ -100,4 +111,4 @@ Los precios están en €/kWh.
 
 ## Despliegue
 
-`.github/workflows/deploy.yml` descarga los precios, guarda los archivos nuevos en el repositorio y publica `_site` en GitHub Pages. Se ejecuta a las 00:00 de Europe/Madrid y también en cada push a `main`, salvo los que solo tocan `data/`.
+`.github/workflows/deploy.yml` descarga los precios, guarda los archivos nuevos en el repositorio y publica `_site` en GitHub Pages. Se ejecuta a las 21:00 de Europe/Madrid, cuando la REE ya ha publicado los precios del día siguiente, y también en cada push a `main`, salvo los que solo tocan `data/`.

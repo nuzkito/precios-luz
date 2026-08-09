@@ -29,16 +29,6 @@ export async function downloadRange(start, end) {
     })
 }
 
-export async function downloadDay(date) {
-    const [{ day, error }] = await downloadRange(date, date)
-
-    if (error) {
-        throw error
-    }
-
-    return day
-}
-
 function buildDay(date, hours) {
     const datetimes = (hours[0].get(date) ?? []).map(value => value.datetime)
 

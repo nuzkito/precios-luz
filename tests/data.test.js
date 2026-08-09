@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { dayExists, directory, downloadDay, downloadRange, listDates, writeDay } from '../src/data.js'
+import { dayExists, directory, downloadRange, listDates, writeDay } from '../src/data.js'
 import {
     answerSeries,
     ceutaGeoId,
@@ -141,22 +141,6 @@ describe('downloadRange', () => {
         const [{ error }] = await downloadRange('2026-07-29', '2026-07-29')
 
         assert.match(error.message, /The series of 2026-07-29 do not have the same hours/)
-    })
-})
-
-describe('downloadDay', () => {
-    it('gives the day of a range of one', async () => {
-        const datetimes = datetimesOf('2026-07-29')
-
-        publish(datetimes)
-
-        assert.deepEqual((await downloadDay('2026-07-29')).datetimes, datetimes)
-    })
-
-    it('throws the error of a day that cannot be built', async () => {
-        publish(datetimesOf('2026-07-28'))
-
-        await assert.rejects(() => downloadDay('2026-07-29'), /The prices of 2026-07-29 have 0 hours/)
     })
 })
 

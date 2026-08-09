@@ -2,8 +2,9 @@ name: Daily Price Update
 
 on:
   schedule:
-    # 00:00 Europe/Madrid (22:00 UTC in winter, 23:00 UTC in summer)
-    - cron: '0 22,23 * * *'
+    # 21:00 Europe/Madrid (20:00 UTC in winter, 19:00 UTC in summer), which is
+    # when the REE has already published the prices of the next day.
+    - cron: '0 19,20 * * *'
   workflow_dispatch:
   push:
     branches:
@@ -30,7 +31,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           hour=$(TZ=Europe/Madrid date +%H)
-          if [ "$hour" = "00" ]; then
+          if [ "$hour" = "21" ]; then
             echo "should-run=true" >> $GITHUB_OUTPUT
           else
             echo "should-run=false" >> $GITHUB_OUTPUT
@@ -63,7 +64,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data
-          git diff --staged --quiet || git commit -m "Add prices for $(TZ=Europe/Madrid date +%F)"
+          # The run saves the prices of tomorrow, and those of today too when an
+          # earlier one was missed, so the message names the days that are new.
+          days=$(git diff --staged --name-only -- data | sed -E 's|data/(....)/(..)/(..)\.json|\1-\2-\3|' | paste -sd , - | sed 's/,/, /g')
+          git diff --staged --quiet || git commit -m "Add prices for $days"
           git push
 
       - name: Setup Pages

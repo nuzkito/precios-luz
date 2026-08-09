@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it, mock } from 'node:test'
-import { datesBetween, daysInRange, isDate, today } from '../src/dates.js'
+import { datesBetween, daysInRange, isDate, today, tomorrow } from '../src/dates.js'
 
 // The dates are handled in UTC so that the DST changes do not turn a day into
 // 23 or 25 hours. Running in a timezone that does change is what makes these
@@ -11,10 +11,18 @@ process.env.TZ = 'Europe/Madrid'
 // The day depends on the clock, so it is fixed for every case. The instants are
 // written in UTC to make the offset of the mainland visible.
 function todayAt(instant) {
+    return at(instant, today)
+}
+
+function tomorrowAt(instant) {
+    return at(instant, tomorrow)
+}
+
+function at(instant, day) {
     mock.timers.enable({ apis: ['Date'], now: new Date(instant).getTime() })
 
     try {
-        return today()
+        return day()
     } finally {
         mock.timers.reset()
     }
@@ -33,6 +41,30 @@ describe('today', () => {
 
     it('pads the month and the day, which is how the history is named', () => {
         assert.equal(todayAt('2026-03-05T12:00:00Z'), '2026-03-05')
+    })
+})
+
+describe('tomorrow', () => {
+    it('is the day after today in mainland time', () => {
+        // The daily execution runs at 21:00 of the mainland, which is 19:00 UTC
+        // in summer and 20:00 in winter.
+        assert.equal(tomorrowAt('2026-07-29T19:00:00Z'), '2026-07-30')
+        assert.equal(tomorrowAt('2026-01-15T20:00:00Z'), '2026-01-16')
+
+        // Past midnight of the mainland the day after is already another one.
+        assert.equal(tomorrowAt('2026-07-29T22:30:00Z'), '2026-07-31')
+    })
+
+    it('crosses months and years', () => {
+        assert.equal(tomorrowAt('2026-02-28T19:00:00Z'), '2026-03-01')
+        assert.equal(tomorrowAt('2025-12-31T19:00:00Z'), '2026-01-01')
+    })
+
+    it('does not skip nor repeat a day on the DST changes', () => {
+        assert.equal(tomorrowAt('2026-03-28T19:00:00Z'), '2026-03-29')
+        assert.equal(tomorrowAt('2026-03-29T19:00:00Z'), '2026-03-30')
+        assert.equal(tomorrowAt('2025-10-25T19:00:00Z'), '2025-10-26')
+        assert.equal(tomorrowAt('2025-10-26T20:00:00Z'), '2025-10-27')
     })
 })
 

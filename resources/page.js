@@ -417,8 +417,8 @@ function priceRows(day, region) {
     })
 }
 
-// The current day in mainland time, which is the day the page shows by default
-// and the one the daily execution downloads.
+// The current day in mainland time, which is the day the page shows by default.
+// The day after is in the history too from 21:00, and the arrows reach it.
 function today() {
     const parts = new Intl.DateTimeFormat('es-ES', {
         year: 'numeric',
