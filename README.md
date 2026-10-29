@@ -12,7 +12,7 @@ El entorno de desarrollo utiliza Docker con Compose: Node se ejecuta dentro del 
 
 ### Descargar precios y construir la web
 
-Para probar la web en local, descarga los precios de hoy y de mañana (si están disponibles) y construye el sitio en `_site`:
+Para probar la web en local, descarga los precios que falten hasta mañana (si están disponibles) y construye el sitio en `_site`. Normalmente solo falta el día de mañana, pero si alguna ejecución se perdió se descargan también los días desde el último guardado:
 
 ```sh
 docker compose run --rm node npm run update
@@ -34,7 +34,7 @@ Prices for 2026-08-03 are not published yet (The prices of 2026-08-03 have 0 hou
 Site built (9 days in the history)
 ```
 
-Si falla la descarga del día de hoy se cancela la ejecución.
+Si falla la descarga de hoy o de un día anterior se cancela la ejecución: los días se guardan en orden y se para en el primero que falla, para que el histórico no quede con huecos.
 
 ### Ver la web en el navegador
 

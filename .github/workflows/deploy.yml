@@ -3,7 +3,8 @@ name: Daily Price Update
 on:
   schedule:
     # 21:00 Europe/Madrid (20:00 UTC in winter, 19:00 UTC in summer), which is
-    # when the REE has already published the prices of the next day.
+    # when the REE has already published the prices of the next day. Both hours
+    # run every day: the one that is too early finds nothing new to save.
     - cron: '0 19,20 * * *'
   workflow_dispatch:
   push:
@@ -20,26 +21,7 @@ permissions:
   id-token: write
 
 jobs:
-  check-time:
-    runs-on: ubuntu-latest
-    outputs:
-      should-run: ${{ steps.madrid-time.outputs.should-run }}
-
-    steps:
-      - name: Check Europe/Madrid time
-        id: madrid-time
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          hour=$(TZ=Europe/Madrid date +%H)
-          if [ "$hour" = "21" ]; then
-            echo "should-run=true" >> $GITHUB_OUTPUT
-          else
-            echo "should-run=false" >> $GITHUB_OUTPUT
-          fi
-
   update-prices:
-    needs: check-time
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || needs.check-time.outputs.should-run == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -64,8 +46,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data
-          # The run saves the prices of tomorrow, and those of today too when an
-          # earlier one was missed, so the message names the days that are new.
+          # The run saves the prices of tomorrow, and those of the days before
+          # when earlier runs were missed, so the message names the new days.
           days=$(git diff --staged --name-only -- data | sed -E 's|data/(....)/(..)/(..)\.json|\1-\2-\3|' | paste -sd , - | sed 's/,/, /g')
           git diff --staged --quiet || git commit -m "Add prices for $days"
           git push

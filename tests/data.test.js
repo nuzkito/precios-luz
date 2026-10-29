@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs/promises'
 import { describe, it } from 'node:test'
-import { dayExists, directory, downloadRange, listDates, writeDay } from '../src/data.js'
+import { datesBetween } from '../src/dates.js'
+import { dayExists, directory, downloadDates, downloadRange, listDates, missingDates, rangesOf, writeDay } from '../src/data.js'
 import {
     answerSeries,
     ceutaGeoId,
     datetimesOf,
     fallBackDate,
     fallBackDatetimes,
+    jsonResponse,
     mainlandGeoId,
     pricesOf,
     springForwardDate,
@@ -200,5 +202,99 @@ describe('listDates', () => {
 
     it('gives nothing when there is no history at all', async () => {
         assert.deepEqual(await listDates(), [])
+    })
+})
+
+describe('missingDates', () => {
+    async function seed(date) {
+        const [year, month, day] = date.split('-')
+
+        await fs.mkdir(`${directory}/${year}/${month}`, { recursive: true })
+        await fs.writeFile(`${directory}/${year}/${month}/${day}.json`, '{}')
+    }
+
+    it('gives the days after the last one saved, up to the end', async () => {
+        await seed('2026-08-26')
+
+        assert.deepEqual(
+            await missingDates('2026-08-30', '2026-08-31'),
+            ['2026-08-27', '2026-08-28', '2026-08-29', '2026-08-30', '2026-08-31']
+        )
+    })
+
+    it('does not ask again for the gaps before the last day saved', async () => {
+        await seed('2026-08-20')
+        await seed('2026-08-26')
+
+        assert.deepEqual(await missingDates('2026-08-27', '2026-08-27'), ['2026-08-27'])
+    })
+
+    it('gives only tomorrow when today is already saved', async () => {
+        await seed('2026-08-30')
+
+        assert.deepEqual(await missingDates('2026-08-30', '2026-08-31'), ['2026-08-31'])
+    })
+
+    it('gives nothing when the end is already saved', async () => {
+        await seed('2026-08-31')
+
+        assert.deepEqual(await missingDates('2026-08-30', '2026-08-31'), [])
+    })
+
+    it('starts from the given day when there is no history', async () => {
+        assert.deepEqual(await missingDates('2026-08-30', '2026-08-31'), ['2026-08-30', '2026-08-31'])
+    })
+})
+
+describe('rangesOf', () => {
+    it('keeps the days that fit the API in one range', () => {
+        assert.deepEqual(rangesOf(['2026-08-01', '2026-08-02']), [['2026-08-01', '2026-08-02']])
+    })
+
+    it('starts a new range when one would grow past 28 days', () => {
+        const dates = [...datesBetween('2026-08-01', '2026-09-05')]
+        const ranges = rangesOf(dates)
+
+        assert.deepEqual(ranges.map(range => range.length), [28, 8])
+        assert.equal(ranges[1].at(0), '2026-08-29')
+    })
+
+    it('gives nothing for no days', () => {
+        assert.deepEqual(rangesOf([]), [])
+    })
+})
+
+describe('downloadDates', () => {
+    it('gives only the days of the range', async () => {
+        publish([...datetimesOf('2026-07-28'), ...datetimesOf('2026-07-29')])
+
+        const days = await downloadDates(['2026-07-29'], '2026-07-28')
+
+        assert.deepEqual(days.map(({ date }) => date), ['2026-07-29'])
+    })
+
+    it('asks for today too when every day of the range comes after it', async () => {
+        api.answer = url => {
+            const start = new URL(url).searchParams.get('start_date')
+
+            return start.startsWith('2026-07-29')
+                ? answerSeries({ [mainlandGeoId]: valuesOf(datetimesOf('2026-07-29')), [ceutaGeoId]: valuesOf(datetimesOf('2026-07-29')) })(url)
+                : jsonResponse({ errors: [{ status: '502', detail: 'Not available' }] })
+        }
+
+        const days = await downloadDates(['2026-07-30'], '2026-07-29')
+
+        assert.equal(new URL(api.calls[0]).searchParams.get('start_date'), '2026-07-29T00:00')
+        assert.equal(days.length, 1)
+        assert.equal(days[0].date, '2026-07-30')
+        assert.match(days[0].error.message, /0 hours/)
+    })
+
+    it('keeps the start of a range that includes today', async () => {
+        publish(datetimesOf('2026-07-29'))
+
+        await downloadDates(['2026-07-29', '2026-07-30'], '2026-07-29')
+
+        assert.equal(new URL(api.calls[0]).searchParams.get('start_date'), '2026-07-29T00:00')
     })
 })

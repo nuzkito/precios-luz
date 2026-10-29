@@ -1,7 +1,6 @@
 const mainlandTimeZone = 'Europe/Madrid'
 
-// The current day in mainland time, which is the one the page shows by default
-// and the first of the two the daily execution downloads.
+// The current day in mainland time, which is the one the page shows by default.
 export function today() {
     const parts = new Intl.DateTimeFormat('es-ES', {
         year: 'numeric',
@@ -16,10 +15,14 @@ export function today() {
 }
 
 // The day after today, which the REE publishes shortly before 21:00 and the
-// daily execution downloads along with today. The day is added in UTC, where
-// there are no DST changes that would leave the date untouched.
+// daily execution downloads.
 export function tomorrow() {
-    const date = parse(today())
+    return nextDay(today())
+}
+
+// The day after a given one, added in UTC for the same reason.
+export function nextDay(day) {
+    const date = parse(day)
 
     date.setUTCDate(date.getUTCDate() + 1)
 

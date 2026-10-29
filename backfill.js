@@ -1,7 +1,6 @@
 import { setTimeout as wait } from 'node:timers/promises'
-import { dayExists, downloadRange, writeDay } from './src/data.js'
-import { datesBetween, daysInRange, isDate } from './src/dates.js'
-import { maxRangeDays } from './src/ree.js'
+import { dayExists, downloadRange, rangesOf, writeDay } from './src/data.js'
+import { datesBetween, isDate } from './src/dates.js'
 
 const pauseBetweenRanges = 1000
 const usage = 'Usage: npm run backfill -- <YYYY-MM-DD> [YYYY-MM-DD] [--force]'
@@ -24,7 +23,7 @@ async function backfill({ start, end, force }) {
         }
     }
 
-    for (const [index, range] of ranges(pending).entries()) {
+    for (const [index, range] of rangesOf(pending).entries()) {
         // Waiting before each range, and not after, keeps the API at ease
         // without pausing for nothing once the last one is done.
         if (index > 0) {
@@ -80,25 +79,6 @@ async function saveRange(range) {
     }
 
     return saved
-}
-
-// The days to download, grouped into the fewest ranges the API accepts. The
-// days already saved are missing from the list, and a range may jump over them
-// as long as it does not grow past `maxRangeDays` from end to end.
-function ranges(dates) {
-    const groups = []
-
-    for (const date of dates) {
-        const current = groups.at(-1)
-
-        if (current && daysInRange(current.at(0), date) <= maxRangeDays) {
-            current.push(date)
-        } else {
-            groups.push([date])
-        }
-    }
-
-    return groups
 }
 
 // A single date is a range of one day. These dates are also in order when

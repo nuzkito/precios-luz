@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { datesBetween, isDate } from './dates.js'
+import { datesBetween, daysInRange, isDate, nextDay } from './dates.js'
 import { series } from './regions.js'
-import { fetchRange } from './ree.js'
+import { fetchRange, maxRangeDays } from './ree.js'
 
 export const directory = 'data'
 
@@ -27,6 +27,43 @@ export async function downloadRange(start, end) {
             return { date, error }
         }
     })
+}
+
+// The days after the last one saved, up to `end`, or from `fallback` when there
+// is no history. Gaps before the last day saved are left to `backfill`.
+export async function missingDates(fallback, end) {
+    const last = (await listDates()).at(-1)
+
+    return [...datesBetween(last ? nextDay(last) : fallback, end)]
+}
+
+// The days to download, grouped into the fewest ranges the API accepts. A range
+// may jump over saved days as long as it stays within `maxRangeDays`.
+export function rangesOf(dates) {
+    const groups = []
+
+    for (const date of dates) {
+        const current = groups.at(-1)
+
+        if (current && daysInRange(current.at(0), date) <= maxRangeDays) {
+            current.push(date)
+        } else {
+            groups.push([date])
+        }
+    }
+
+    return groups
+}
+
+// Downloads the days of one range from `rangesOf`. When all of them come after
+// `today` the API fails instead of leaving them out, so today is asked for too
+// and left out of the answer.
+export async function downloadDates(range, today) {
+    const wanted = new Set(range)
+    const start = range.at(0) > today ? today : range.at(0)
+    const days = await downloadRange(start, range.at(-1))
+
+    return days.filter(({ date }) => wanted.has(date))
 }
 
 function buildDay(date, hours) {
