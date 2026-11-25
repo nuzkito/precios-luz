@@ -11,7 +11,7 @@
         <link rel="manifest" href="site.webmanifest">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=Martian+Mono:wdth,wght@75..112.5,400..700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="page.css">
         <!-- The theme is applied before painting so that the page never shows the light one and then turns dark. -->
         <script>
@@ -25,15 +25,8 @@
     <body>
         <div class="page">
             <header class="header">
-                <div>
-                    <h1>Precio de la electricidad</h1>
-                    <p class="subtitle">España · €/kWh por hora</p>
-                </div>
-                <div class="segmented" id="themeSelector" role="group" aria-label="Tema">
-                    <button type="button" data-theme="auto">Auto</button>
-                    <button type="button" data-theme="light">Claro</button>
-                    <button type="button" data-theme="dark">Oscuro</button>
-                </div>
+                <h1>Precio de la electricidad</h1>
+                <p class="subtitle">España · €/kWh por hora</p>
             </header>
 
             <div class="controls">
@@ -84,6 +77,14 @@
                 <h2>Tabla · <span id="tableRegion"></span></h2>
                 <div class="table" id="priceTable"></div>
             </section>
+
+            <!-- The theme goes after the prices, which are what the page is read
+                 for. On a wide screen it is drawn next to the title. -->
+            <div class="segmented theme-selector" id="themeSelector" role="group" aria-label="Tema">
+                <button type="button" data-theme="auto">Auto</button>
+                <button type="button" data-theme="light">Claro</button>
+                <button type="button" data-theme="dark">Oscuro</button>
+            </div>
 
             <p class="source">Fuente: <a href="https://www.ree.es/">Red Eléctrica</a>.</p>
         </div>

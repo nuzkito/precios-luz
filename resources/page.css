@@ -1,17 +1,17 @@
 :root,
 :root[data-theme="light"] {
     color-scheme: light;
-    --bg: oklch(0.977 0.008 80);
-    --panel: oklch(0.995 0.004 80);
-    --fg: oklch(0.23 0.012 60);
-    --muted: oklch(0.52 0.015 60);
-    --line: oklch(0.895 0.01 80);
-    --accent: oklch(0.62 0.14 250);
-    --accent-hover: oklch(0.52 0.14 250);
-    --selected: oklch(0.93 0.01 80);
-    --c-low: oklch(0.55 0.14 150);
-    --c-medium: oklch(0.66 0.13 85);
-    --c-high: oklch(0.55 0.16 27);
+    --bg: oklch(0.99 0.002 260);
+    --panel: oklch(0.99 0.002 260);
+    --fg: oklch(0.23 0.005 260);
+    --muted: oklch(0.5 0.008 260);
+    --line: oklch(0.87 0.004 260);
+    --control-line: oklch(0.64 0.006 260);
+    --accent: oklch(0.52 0.14 250);
+    --accent-hover: oklch(0.42 0.14 250);
+    --c-low: oklch(0.53 0.12 165);
+    --c-medium: oklch(0.57 0.15 55);
+    --c-high: oklch(0.55 0.19 22);
 }
 :root[data-theme="auto"] {
     color-scheme: light dark;
@@ -21,17 +21,17 @@
 }
 :root[data-theme="dark"],
 :root[data-theme="auto"] {
-    --dark-bg: oklch(0.185 0.012 60);
-    --dark-panel: oklch(0.225 0.012 60);
-    --dark-fg: oklch(0.94 0.008 80);
-    --dark-muted: oklch(0.67 0.012 70);
-    --dark-line: oklch(0.32 0.012 60);
+    --dark-bg: oklch(0.19 0.004 260);
+    --dark-panel: oklch(0.19 0.004 260);
+    --dark-fg: oklch(0.94 0.003 260);
+    --dark-muted: oklch(0.68 0.006 260);
+    --dark-line: oklch(0.34 0.005 260);
     --dark-accent: oklch(0.72 0.12 250);
     --dark-accent-hover: oklch(0.82 0.12 250);
-    --dark-selected: oklch(0.32 0.012 60);
-    --dark-c-low: oklch(0.74 0.13 150);
-    --dark-c-medium: oklch(0.79 0.12 85);
-    --dark-c-high: oklch(0.70 0.15 27);
+    --dark-control-line: oklch(0.55 0.006 260);
+    --dark-c-low: #47c496;
+    --dark-c-medium: #f59840;
+    --dark-c-high: #f75c61;
 }
 :root[data-theme="dark"] {
     --bg: var(--dark-bg);
@@ -41,7 +41,7 @@
     --line: var(--dark-line);
     --accent: var(--dark-accent);
     --accent-hover: var(--dark-accent-hover);
-    --selected: var(--dark-selected);
+    --control-line: var(--dark-control-line);
     --c-low: var(--dark-c-low);
     --c-medium: var(--dark-c-medium);
     --c-high: var(--dark-c-high);
@@ -55,16 +55,31 @@
         --line: var(--dark-line);
         --accent: var(--dark-accent);
         --accent-hover: var(--dark-accent-hover);
-        --selected: var(--dark-selected);
+        --control-line: var(--dark-control-line);
         --c-low: var(--dark-c-low);
         --c-medium: var(--dark-c-medium);
         --c-high: var(--dark-c-high);
     }
 }
 
+/* The spaces of the page come from one short scale, so that they keep the same
+   rhythm everywhere. */
 :root {
-    --sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --mono: 'Martian Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+    --section-gap: var(--space-6);
+    --card-padding: var(--space-5);
+    /* The column at the left of the chart that holds the price labels: six
+       characters of the font of the labels, which every element that uses it
+       must have, and a small space. */
+    --axis-width: calc(6ch + var(--space-2));
+    --axis-font-size: 13px;
 }
 
 .low {
@@ -79,7 +94,7 @@
 
 body {
     margin: 0;
-    padding: 40px 24px 64px;
+    padding: 40px var(--space-5) 64px;
     min-height: 100vh;
     background: var(--bg);
     color: var(--fg);
@@ -97,41 +112,61 @@ a:hover {
     display: none !important;
 }
 
+/* Every part of the page takes a whole row, except the theme, which is drawn
+   next to the title although it comes after the prices. */
 .page {
     max-width: 960px;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--section-gap) var(--space-4);
 }
-.header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 16px;
+.page > * {
+    grid-column: 1 / -1;
+}
+.page > .header {
+    grid-column: 1;
+}
+.page > .theme-selector {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+}
+/* The titles are set in condensed capitals, and the subtitle in the font of
+   the numbers. */
+.header h1,
+.card h2 {
+    font-weight: 800;
+    font-stretch: 75%;
+    text-transform: uppercase;
 }
 .header h1 {
     margin: 0;
-    font-size: 26px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-size: 34px;
+    line-height: 1.05;
 }
 .subtitle {
-    margin: 4px 0 0;
-    font-size: 14px;
+    margin: var(--space-2) 0 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--muted);
 }
 .card {
     background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 24px;
+    border: 2px solid var(--line);
+    padding: var(--card-padding);
 }
+/* The title of a card is a bar across its top, closed by the same strong line
+   as the head of the table. */
 .card h2 {
-    margin: 0 0 20px;
-    font-size: 15px;
-    font-weight: 600;
+    margin: calc(var(--card-padding) * -1) calc(var(--card-padding) * -1) var(--card-padding);
+    padding: var(--space-4) var(--card-padding);
+    border-bottom: 2px solid var(--muted);
+    font-size: 20px;
+    font-stretch: 87.5%;
+    letter-spacing: 0.04em;
 }
 
 button,
@@ -140,13 +175,21 @@ select {
     font-family: inherit;
     color: var(--fg);
 }
+/* The controls and the selectors share one height, so that their borders line
+   up side by side. */
+.control,
+.segmented {
+    box-sizing: border-box;
+    height: 48px;
+}
+/* The controls have a stronger border than the cards, which only group what
+   they hold, so that they can be told apart from the page. */
 .control {
     background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: 500;
+    border: 2px solid var(--control-line);
+    padding: 0 var(--space-4);
+    font-size: 18px;
+    font-weight: 700;
 }
 button.control,
 select.control {
@@ -154,30 +197,47 @@ select.control {
 }
 button.control:hover:not(:disabled),
 select.control:hover {
-    border-color: var(--muted);
+    border-color: var(--fg);
+}
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .controls {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-3);
 }
+/* The arrows and the date are one box: each one overlaps the border of the one
+   before it, and the one being hovered or focused is drawn on top. */
 .day-selector {
     display: flex;
     align-items: center;
-    gap: 6px;
+}
+.day-selector > * + * {
+    margin-left: -2px;
+}
+.day-selector > :hover,
+.day-selector > :focus-visible {
+    position: relative;
 }
 .day-selector input {
+    flex: 1;
+    min-width: 0;
     font-family: var(--mono);
+    font-size: 18px;
 }
 .arrow {
-    padding: 8px 12px;
+    padding: 0 var(--space-4);
     line-height: 1;
-    font-size: 16px;
+    font-size: 20px;
 }
+/* A disabled arrow keeps its border, so that it still looks like a button, and
+   its symbol is faded but still visible. */
 .arrow:disabled {
-    opacity: 0.4;
+    color: color-mix(in oklab, var(--line), var(--muted));
     cursor: default;
 }
 .view-selector {
@@ -185,35 +245,41 @@ select.control:hover {
 }
 .segmented {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 3px;
+    border: 2px solid var(--control-line);
+    padding: var(--space-1);
 }
 .segmented button {
     border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 500;
+    padding: 0 var(--space-3);
+    font-size: 18px;
+    font-weight: 700;
     cursor: pointer;
     background: transparent;
     color: var(--muted);
 }
-.segmented button.active {
-    background: var(--selected);
+.segmented button:hover {
     color: var(--fg);
 }
+.segmented button.active {
+    background: var(--fg);
+    color: var(--panel);
+}
 
+/* The date line and the error belong to the controls, so they sit right below
+   them instead of a whole section apart. */
+.day-info,
+.error {
+    margin: calc(var(--space-2) - var(--section-gap)) 0 0;
+}
 .day-info {
-    margin: -12px 0 0;
-    font-size: 13px;
+    font-family: var(--mono);
+    font-size: 14px;
     color: var(--muted);
 }
 .error {
-    margin: -12px 0 0;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--c-high);
 }
 
@@ -221,18 +287,18 @@ select.control:hover {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 24px;
-    padding: 20px 24px;
+    gap: var(--space-5);
 }
 .now-label {
-    font-size: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--muted);
 }
 .now-price {
     display: block;
-    margin-top: 2px;
+    margin-top: var(--space-2);
     font-family: var(--mono);
     font-size: 40px;
     font-weight: 600;
@@ -244,18 +310,28 @@ select.control:hover {
     color: var(--muted);
 }
 .badge {
-    font-size: 13px;
-    font-weight: 600;
-    padding: 5px 12px;
-    border-radius: 999px;
-    color: var(--level);
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: var(--space-2) var(--space-4);
+    /* Mixed with the text colour, so that it is still readable on the tint of
+       its own colour. */
+    color: color-mix(in oklab, var(--level) 75%, var(--fg));
     background: color-mix(in oklch, var(--level) 14%, transparent);
 }
 
+.chart,
+.hour-labels {
+    font-family: var(--mono);
+    font-size: var(--axis-font-size);
+}
 .chart {
     position: relative;
     height: 240px;
 }
+/* The lines of the grid cross the whole chart, and their labels stay in a
+   column at the left, where no bar can cover them. */
 .chart-grid {
     position: absolute;
     inset: 0;
@@ -265,14 +341,12 @@ select.control:hover {
 }
 .chart-grid div {
     border-top: 1px dashed var(--line);
-    padding-top: 2px;
-    font-family: var(--mono);
-    font-size: 11px;
+    padding-top: var(--space-1);
     color: var(--muted);
 }
 .chart-grid div:last-child {
     padding-top: 0;
-    border-top: 1px solid var(--line);
+    border-top: 2px solid var(--line);
 }
 .chart-bars,
 .hour-labels {
@@ -283,13 +357,12 @@ select.control:hover {
 }
 .chart-bars {
     position: absolute;
-    inset: 0 0 1px;
+    inset: 0 0 2px var(--axis-width);
     align-items: end;
 }
 .bar {
     position: relative;
     min-height: 1px;
-    border-radius: 3px 3px 0 0;
     background: var(--level);
 }
 .bar:hover {
@@ -308,13 +381,11 @@ select.control:hover {
     border-top: 6px solid var(--level);
 }
 .hour-labels {
-    margin-top: 6px;
+    margin: var(--space-2) 0 0 var(--axis-width);
 }
 .hour-labels span {
     text-align: center;
     white-space: nowrap;
-    font-family: var(--mono);
-    font-size: 10px;
     color: var(--muted);
 }
 .hour-labels span.now {
@@ -322,25 +393,32 @@ select.control:hover {
 }
 .legend {
     display: flex;
-    gap: 20px;
-    margin-top: 18px;
-    font-size: 12px;
-    color: var(--muted);
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-5);
+    margin-top: var(--space-5);
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 .legend span {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-2);
 }
 .legend span::before {
     content: '';
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
+    width: 14px;
+    height: 14px;
     background: var(--level);
 }
 .legend .now-legend {
     margin-left: auto;
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--muted);
 }
 .legend .now-legend::before {
     content: none;
@@ -349,24 +427,27 @@ select.control:hover {
 .table {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0 40px;
+    gap: 0 var(--space-6);
 }
 .table-column {
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-content: start;
 }
+/* The rows have no side padding, so that the hours start in line with the
+   title of the card and with the chart. */
 .table-head,
 .table-row {
     display: grid;
     grid-column: 1 / -1;
     grid-template-columns: subgrid;
-    column-gap: 14px;
+    column-gap: var(--space-4);
     align-items: center;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 2px solid var(--line);
 }
 .table-head {
-    padding: 6px 10px;
+    padding: var(--space-2) 0;
+    border-bottom-color: var(--muted);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -374,12 +455,15 @@ select.control:hover {
 }
 .table-row {
     position: relative;
-    padding: 5px 10px;
-    border-radius: 6px;
+    padding: var(--space-2) 0;
     font-size: 13px;
 }
+/* The tint of the current hour reaches a little beyond the text at both sides,
+   so that the text does not touch its edges. */
 .table-row.now {
-    background: color-mix(in oklch, var(--accent) 10%, transparent);
+    margin: 0 calc(var(--space-1) * -1);
+    padding: var(--space-2) var(--space-1);
+    background: color-mix(in oklch, var(--level) 12%, transparent);
 }
 .table-row .hour {
     font-family: var(--mono);
@@ -400,13 +484,15 @@ select.control:hover {
     display: block;
     height: 100%;
     min-width: 1px;
-    border-radius: 0 3px 3px 0;
     background: var(--level);
 }
+/* The current hour is marked like in the chart: a triangle in the colour of
+   the bar, pointing at the hour. It sits in the padding of the card, outside
+   the tint, so that its hour and its bar start with the others. */
 .table-row.now::before {
     content: '';
     position: absolute;
-    left: 2px;
+    left: calc(var(--space-2) * -1);
     top: 50%;
     transform: translateY(-50%);
     border: 5px solid transparent;
@@ -421,26 +507,57 @@ select.control:hover {
 }
 
 @media (max-width: 640px) {
+    :root {
+        --section-gap: var(--space-5);
+        --card-padding: var(--space-4);
+        --axis-font-size: 11px;
+    }
     body {
-        padding: 20px 14px 48px;
+        padding: var(--space-5) var(--space-4) 48px;
     }
     .header h1 {
-        font-size: 21px;
+        font-size: 26px;
+    }
+    /* On a narrow screen the theme stays where it is in the page, after the
+       prices, small, and right above the source. */
+    .page > .theme-selector {
+        grid-column: 1 / -1;
+        grid-row: auto;
+        justify-self: start;
+        height: 40px;
+    }
+    .theme-selector button {
+        font-size: 14px;
+    }
+    .source {
+        margin-top: calc(var(--space-2) - var(--section-gap));
     }
     .controls > * {
         flex: 1 1 auto;
     }
+    .day-selector {
+        flex-basis: 100%;
+    }
     .view-selector {
         margin-left: 0;
-    }
-    .segmented {
         width: 100%;
     }
-    .segmented button {
+    .view-selector button {
         flex: 1;
     }
     .now-price {
         font-size: 30px;
+    }
+    .control,
+    .segmented button {
+        font-size: 16px;
+    }
+    .segmented button {
+        padding: 0 var(--space-2);
+        white-space: nowrap;
+    }
+    .day-info {
+        font-size: 12px;
     }
     .chart {
         height: 180px;

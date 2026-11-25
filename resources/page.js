@@ -54,7 +54,6 @@ const chartSection = document.getElementById('chartSection')
 const tableSection = document.getElementById('tableSection')
 const chartRegion = document.getElementById('chartRegion')
 const tableRegion = document.getElementById('tableRegion')
-const chart = document.querySelector('.chart')
 const chartBars = document.getElementById('chartBars')
 const hourLabels = document.getElementById('hourLabels')
 const nowLegend = document.getElementById('nowLegend')
@@ -135,17 +134,18 @@ function renderChart(rows) {
 // A bar whose edges fall between two screen pixels is painted blurred, and the
 // gaps around it look wider or narrower than the rest. So the bars and the gaps
 // get a whole number of screen pixels, the first bar starts on a whole pixel,
-// and the few pixels left over are shared at both sides of the chart.
+// and the few pixels left over are shared at both sides of the chart. The bars
+// are measured on their own, without the column of the price labels.
 function fitBars() {
     const hours = chartBars.children.length
 
-    if (hours === 0 || chart.clientWidth === 0) {
+    if (hours === 0 || chartBars.clientWidth === 0) {
         return
     }
 
     const ratio = window.devicePixelRatio || 1
-    const left = chart.getBoundingClientRect().left * ratio
-    const width = chart.clientWidth * ratio
+    const left = chartBars.getBoundingClientRect().left * ratio
+    const width = chartBars.clientWidth * ratio
     const gap = Math.max(1, Math.round(barGap * ratio))
     const bar = Math.floor((width - gap * (hours - 1)) / hours)
     const spare = width - bar * hours - gap * (hours - 1)
@@ -187,6 +187,7 @@ function tableRow(row, highest) {
 function renderDay() {
     document.title = `Precios de la luz - ${formatDate(currentDay.date)}`
     dayInfo.textContent = `Fecha: ${formatDate(currentDay.date)}${buildInfo()}`
+    dayInfo.hidden = false
     daySelector.value = currentDay.date
     previousDay.disabled = !neighbourDate(-1)
     nextDay.disabled = !neighbourDate(1)
@@ -280,7 +281,9 @@ function showDayError() {
     daySelector.value = currentDay?.date ?? ''
 
     if (currentDay === null) {
-        dayInfo.textContent = ''
+        // Hidden, and not only emptied, so that it leaves no gap above the
+        // error.
+        dayInfo.hidden = true
     }
 }
 
@@ -499,7 +502,9 @@ regionSelector.addEventListener('change', () => goToRegion(findRegion(regionSele
 viewButtons.forEach(button => button.addEventListener('click', () => selectView(button.dataset.view)))
 themeButtons.forEach(button => button.addEventListener('click', () => selectTheme(button.dataset.theme)))
 window.addEventListener('popstate', applyUrl)
-new ResizeObserver(fitBars).observe(chart)
+// The border box of the bars is set by the chart alone, while their content box
+// changes with the offset that fitBars sets, so only the first one is watched.
+new ResizeObserver(fitBars).observe(chartBars, { box: 'border-box' })
 
 // The hour being lived changes while the page is open, so whatever marks it is
 // repainted every minute.
