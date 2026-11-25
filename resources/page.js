@@ -23,11 +23,7 @@ const views = [
     { id: 'table', chart: false, table: true }
 ]
 
-const themes = [
-    { id: 'auto', label: 'Auto' },
-    { id: 'light', label: 'Claro' },
-    { id: 'dark', label: 'Oscuro' }
-]
+const themes = ['auto', 'light', 'dark']
 
 const levelNames = {
     low: 'Hora barata',
@@ -53,8 +49,7 @@ const previousDay = document.getElementById('previousDay')
 const nextDay = document.getElementById('nextDay')
 const regionSelector = document.getElementById('regionSelector')
 const viewButtons = [...document.getElementById('viewSelector').children]
-const themeButton = document.getElementById('themeButton')
-const themeLabel = document.getElementById('themeLabel')
+const themeButtons = [...document.getElementById('themeSelector').children]
 const chartSection = document.getElementById('chartSection')
 const tableSection = document.getElementById('tableSection')
 const chartRegion = document.getElementById('chartRegion')
@@ -316,18 +311,18 @@ function selectView(id) {
 // applied by the small script of the page before it is painted, so that a dark
 // page is never shown light first.
 function selectTheme(id) {
-    const theme = themes.find(theme => theme.id === id) ?? themes[0]
+    const theme = themes.includes(id) ? id : themes[0]
 
-    document.documentElement.dataset.theme = theme.id
-    themeLabel.textContent = theme.label
+    document.documentElement.dataset.theme = theme
 
-    remember('tema', theme.id)
-}
+    themeButtons.forEach(button => {
+        const selected = button.dataset.theme === theme
 
-function cycleTheme() {
-    const index = themes.findIndex(theme => theme.id === document.documentElement.dataset.theme)
+        button.classList.toggle('active', selected)
+        button.setAttribute('aria-pressed', selected)
+    })
 
-    selectTheme(themes[(index + 1) % themes.length].id)
+    remember('tema', theme)
 }
 
 // The theme and the view are remembered between visits. A browser that refuses
@@ -497,7 +492,7 @@ previousDay.addEventListener('click', () => goToDay(neighbourDate(-1)))
 nextDay.addEventListener('click', () => goToDay(neighbourDate(1)))
 regionSelector.addEventListener('change', () => goToRegion(findRegion(regionSelector.value)))
 viewButtons.forEach(button => button.addEventListener('click', () => selectView(button.dataset.view)))
-themeButton.addEventListener('click', cycleTheme)
+themeButtons.forEach(button => button.addEventListener('click', () => selectTheme(button.dataset.theme)))
 window.addEventListener('popstate', applyUrl)
 new ResizeObserver(fitBars).observe(chart)
 
@@ -508,7 +503,7 @@ setInterval(renderPrices, 60 * 1000)
 buildRegions()
 selectRegion(currentRegion)
 selectView(remembered('vista') ?? views[0].id)
-selectTheme(remembered('tema') ?? themes[0].id)
+selectTheme(remembered('tema') ?? themes[0])
 
 const site = await loadSite()
 

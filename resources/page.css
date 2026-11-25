@@ -182,6 +182,8 @@ select.control:hover {
 }
 .view-selector {
     margin-left: auto;
+}
+.segmented {
     display: flex;
     gap: 4px;
     background: var(--panel);
@@ -189,7 +191,7 @@ select.control:hover {
     border-radius: 8px;
     padding: 3px;
 }
-.view-selector button {
+.segmented button {
     border: none;
     border-radius: 6px;
     padding: 6px 12px;
@@ -199,7 +201,7 @@ select.control:hover {
     background: transparent;
     color: var(--muted);
 }
-.view-selector button.active {
+.segmented button.active {
     background: var(--selected);
     color: var(--fg);
 }
@@ -414,9 +416,11 @@ select.control:hover {
     }
     .view-selector {
         margin-left: 0;
+    }
+    .segmented {
         width: 100%;
     }
-    .view-selector button {
+    .segmented button {
         flex: 1;
     }
     .now-price {

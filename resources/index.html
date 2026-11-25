@@ -29,7 +29,11 @@
                     <h1>Precio de la electricidad</h1>
                     <p class="subtitle">España · €/kWh por hora</p>
                 </div>
-                <button type="button" id="themeButton" class="control">Tema: <span id="themeLabel">Auto</span></button>
+                <div class="segmented" id="themeSelector" role="group" aria-label="Tema">
+                    <button type="button" data-theme="auto">Auto</button>
+                    <button type="button" data-theme="light">Claro</button>
+                    <button type="button" data-theme="dark">Oscuro</button>
+                </div>
             </header>
 
             <div class="controls">
@@ -39,7 +43,7 @@
                     <button type="button" id="nextDay" class="control arrow" title="Día siguiente" disabled>›</button>
                 </div>
                 <select id="regionSelector" class="control" aria-label="Zona"></select>
-                <div class="view-selector" id="viewSelector" role="group" aria-label="Vista">
+                <div class="segmented view-selector" id="viewSelector" role="group" aria-label="Vista">
                     <button type="button" data-view="both">Gráfica y tabla</button>
                     <button type="button" data-view="chart">Gráfica</button>
                     <button type="button" data-view="table">Tabla</button>
