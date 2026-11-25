@@ -9,9 +9,16 @@
     --control-line: oklch(0.64 0.006 260);
     --accent: oklch(0.52 0.14 250);
     --accent-hover: oklch(0.42 0.14 250);
-    --c-low: oklch(0.53 0.12 165);
-    --c-medium: oklch(0.57 0.15 55);
-    --c-high: oklch(0.55 0.19 22);
+    /* The levels differ in lightness, not only in hue, so that people who
+       cannot tell the hues apart still see them: the cheap hours are the
+       lightest and the expensive ones the darkest, in both themes. A light red
+       would turn pink, so the order is not turned around in the dark theme.
+       The hues are the usual green, orange and red, with the green turned a
+       little towards blue, which keeps it apart from the red for more
+       colour-blind people. */
+    --c-low: oklch(0.64 0.12 170);
+    --c-medium: oklch(0.52 0.125 55);
+    --c-high: oklch(0.4 0.16 25);
 }
 :root[data-theme="auto"] {
     color-scheme: light dark;
@@ -29,9 +36,9 @@
     --dark-accent: oklch(0.72 0.12 250);
     --dark-accent-hover: oklch(0.82 0.12 250);
     --dark-control-line: oklch(0.55 0.006 260);
-    --dark-c-low: #47c496;
-    --dark-c-medium: #f59840;
-    --dark-c-high: #f75c61;
+    --dark-c-low: oklch(0.84 0.13 170);
+    --dark-c-medium: oklch(0.72 0.16 60);
+    --dark-c-high: oklch(0.57 0.2 25);
 }
 :root[data-theme="dark"] {
     --bg: var(--dark-bg);
@@ -82,6 +89,13 @@
     --axis-font-size: 13px;
 }
 
+/* The text in the colour of a level is mixed with the text colour, so that the
+   lightest levels are still readable. */
+.low,
+.medium,
+.high {
+    --level-text: color-mix(in oklab, var(--level) 65%, var(--fg));
+}
 .low {
     --level: var(--c-low);
 }
@@ -315,9 +329,7 @@ select.control:hover {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     padding: var(--space-2) var(--space-4);
-    /* Mixed with the text colour, so that it is still readable on the tint of
-       its own colour. */
-    color: color-mix(in oklab, var(--level) 75%, var(--fg));
+    color: var(--level-text);
     background: color-mix(in oklch, var(--level) 14%, transparent);
 }
 
@@ -363,7 +375,81 @@ select.control:hover {
 .bar {
     position: relative;
     min-height: 1px;
+}
+/* So that the levels can be told apart without seeing their colours, the
+   expensive bars have a small triangle that points up at their top and the
+   cheap ones a triangle that points down at their bottom, and the medium ones
+   a flat line in their middle. The marks are cut out of the bar in the colour
+   of the card, inside the bar so that they do not touch the mark of the
+   current hour above it. A bar too short for its mark hides it. */
+.bar,
+.legend span::before {
     background: var(--level);
+}
+.bar.high::after,
+.bar.low::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(60%, 12px);
+    aspect-ratio: 2;
+    max-height: calc(100% - var(--space-1) * 2);
+    background: var(--panel);
+}
+.bar.high::after {
+    top: var(--space-1);
+}
+.bar.low::after {
+    bottom: var(--space-1);
+}
+.bar.medium::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: min(60%, 12px);
+    height: 3px;
+    max-height: calc(100% - var(--space-1) * 2);
+    background: var(--panel);
+}
+.bar.high::after,
+.legend .high::after,
+.table-row.high .price-bar span::after {
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.bar.low::after,
+.legend .low::after,
+.table-row.low .price-bar span::after {
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+/* In the legend the mark sits on the square of its colour, in the same place
+   as in the bars. */
+.legend .high,
+.legend .medium,
+.legend .low {
+    position: relative;
+}
+.legend .high::after,
+.legend .medium::after,
+.legend .low::after {
+    content: '';
+    position: absolute;
+    left: 3px;
+    width: 8px;
+    height: 4px;
+    background: var(--panel);
+}
+.legend .high::after {
+    top: calc(50% - 5px);
+}
+.legend .low::after {
+    top: calc(50% + 1px);
+}
+.legend .medium::after {
+    top: calc(50% - 1px);
+    height: 2px;
 }
 .bar:hover {
     filter: brightness(1.15);
@@ -410,7 +496,6 @@ select.control:hover {
     content: '';
     width: 14px;
     height: 14px;
-    background: var(--level);
 }
 .legend .now-legend {
     margin-left: auto;
@@ -474,17 +559,45 @@ select.control:hover {
     font-family: var(--mono);
     font-size: 13px;
     font-weight: 600;
-    color: var(--level);
+    color: var(--level-text);
 }
 .price-bar {
     display: block;
-    height: 8px;
+    height: 12px;
 }
 .price-bar span {
+    position: relative;
     display: block;
     height: 100%;
     min-width: 1px;
     background: var(--level);
+}
+/* The bars of the table have the marks of the chart: the triangle of the
+   expensive ones at their end and that of the cheap ones at their start, like
+   the top and the bottom of the bars of the chart, and the line of the medium
+   ones in their middle. A bar too short for its mark hides it. */
+.table-row.high .price-bar span::after,
+.table-row.medium .price-bar span::after,
+.table-row.low .price-bar span::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 5px;
+    max-width: calc(100% - var(--space-1) * 2);
+    background: var(--panel);
+}
+.table-row.high .price-bar span::after {
+    right: var(--space-1);
+}
+.table-row.low .price-bar span::after {
+    left: var(--space-1);
+}
+.table-row.medium .price-bar span::after {
+    left: 50%;
+    height: 3px;
+    transform: translate(-50%, -50%);
 }
 /* The current hour is marked like in the chart: a triangle in the colour of
    the bar, pointing at the hour. It sits in the padding of the card, outside
