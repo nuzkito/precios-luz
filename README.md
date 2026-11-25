@@ -10,20 +10,19 @@ Todos los días a las 21:00 se descargan los precios del próximo día desde la 
 
 El entorno de desarrollo utiliza Docker con Compose: Node se ejecuta dentro del contenedor que describe el `Dockerfile`.
 
-### Descargar precios y construir la web
+### Descargar precios
 
-Para probar la web en local, descarga los precios que falten hasta mañana (si están disponibles) y construye el sitio en `_site`. Normalmente solo falta el día de mañana, pero si alguna ejecución se perdió se descargan también los días desde el último guardado:
+Descarga los precios que falten hasta mañana (si están disponibles) y los guarda en `data/`. Normalmente solo falta el día de mañana, pero si alguna ejecución se perdió se descargan también los días desde el último guardado:
 
 ```sh
 docker compose run --rm node npm run update
 ```
 
-Termina diciendo qué días se han guardado y cuántos hay ya en el histórico:
+Termina diciendo qué días se han guardado:
 
 ```
 Prices for 2026-08-02 saved
 Prices for 2026-08-03 saved
-Site built (10 days in the history)
 ```
 
 Antes de las 21:00 los precios de mañana todavía no existen, así que solo se guarda el día de hoy y se avisa de que faltan:
@@ -31,10 +30,23 @@ Antes de las 21:00 los precios de mañana todavía no existen, así que solo se 
 ```
 Prices for 2026-08-02 saved
 Prices for 2026-08-03 are not published yet (The prices of 2026-08-03 have 0 hours)
-Site built (9 days in the history)
 ```
 
 Si falla la descarga de hoy o de un día anterior se cancela la ejecución: los días se guardan en orden y se para en el primero que falla, para que el histórico no quede con huecos.
+
+### Construir la web
+
+Construye el sitio en `_site` con los días que ya hay en `data/`, sin descargar nada:
+
+```sh
+docker compose run --rm node npm run build
+```
+
+Termina diciendo cuántos días hay en el histórico:
+
+```
+Site built (10 days in the history)
+```
 
 ### Ver la web en el navegador
 
@@ -44,7 +56,7 @@ Levanta el servidor:
 docker compose up --detach server
 ```
 
-La web se publica en http://localhost:3000, con la tabla y la gráfica del día que acabas de descargar.
+La web se publica en http://localhost:3000, con la tabla y la gráfica de los días del histórico. Tras descargar precios nuevos hay que lanzar `npm run build` para verlos.
 
 Para apagar el servidor:
 
@@ -68,7 +80,7 @@ docker compose run --rm node npm run backfill -- 2025-01-01
 
 El script de backfill omite los días que ya existen, salvo que se le pase `--force`. Si un día falla, se continúa descargando el resto. Los datos se piden en rangos de 28 días por limitaciones de la API. Al acabar resume cuántos días ha bajado, cuántos ya estaban y cuántos han fallado, y se indica un error si falló alguno.
 
-Para ver los días nuevos en el navegador hay que lanzar `npm run update`.
+Para ver los días nuevos en el navegador hay que lanzar `npm run build`.
 
 ### Ejecutar tests
 
@@ -111,4 +123,4 @@ Los precios están en €/kWh.
 
 ## Despliegue
 
-`.github/workflows/deploy.yml` descarga los precios, guarda los archivos nuevos en el repositorio y publica `_site` en GitHub Pages. Se ejecuta a las 21:00 de Europe/Madrid, cuando la REE ya ha publicado los precios del día siguiente, y también en cada push a `main`, salvo los que solo tocan `data/`.
+`.github/workflows/deploy.yml` descarga los precios, guarda los archivos nuevos en el repositorio, construye la web y publica `_site` en GitHub Pages. Se ejecuta a las 21:00 de Europe/Madrid, cuando la REE ya ha publicado los precios del día siguiente, y también en cada push a `main`, salvo los que solo tocan `data/`.

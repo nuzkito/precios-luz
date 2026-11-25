@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Update prices and build the site
+      - name: Update prices
         run: npm run update
 
       - name: Commit new data files
@@ -51,6 +51,9 @@ jobs:
           days=$(git diff --staged --name-only -- data | sed -E 's|data/(....)/(..)/(..)\.json|\1-\2-\3|' | paste -sd , - | sed 's/,/, /g')
           git diff --staged --quiet || git commit -m "Add prices for $days"
           git push
+
+      - name: Build the site
+        run: npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

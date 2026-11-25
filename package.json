@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "update": "node updatePrices.js",
+    "build": "node buildSite.js",
     "backfill": "node backfill.js",
     "test": "node --test --experimental-test-module-mocks --disable-warning=ExperimentalWarning \"tests/**/*.test.js\""
   }
