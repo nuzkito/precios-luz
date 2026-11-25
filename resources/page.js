@@ -5,6 +5,9 @@ const anHour = 60 * 60 * 1000
 // low and an expensive one high instead of every day filling the same height.
 const minimumTop = 0.4
 
+// The space between two bars, in CSS pixels.
+const barGap = 3
+
 const regions = [
     { id: 'peninsula', label: 'Península', timeZone: mainlandTimeZone },
     { id: 'baleares', label: 'Baleares', timeZone: mainlandTimeZone },
@@ -56,11 +59,9 @@ const chartSection = document.getElementById('chartSection')
 const tableSection = document.getElementById('tableSection')
 const chartRegion = document.getElementById('chartRegion')
 const tableRegion = document.getElementById('tableRegion')
-const chartLine = document.getElementById('chartLine')
-const chartArea = document.getElementById('chartArea')
-const chartDots = document.getElementById('chartDots')
+const chart = document.querySelector('.chart')
+const chartBars = document.getElementById('chartBars')
 const hourLabels = document.getElementById('hourLabels')
-const nowLine = document.getElementById('nowLine')
 const nowLegend = document.getElementById('nowLegend')
 const yMax = document.getElementById('yMax')
 const yMid = document.getElementById('yMid')
@@ -107,26 +108,20 @@ function renderNow(rows) {
     nowLevel.className = `badge ${row.level}`
 }
 
-// The chart is a line drawn inside a square that is stretched to the size of its
-// container, with a dot over the price of each hour. Prices are measured against
-// a top that leaves some room above the highest one, which is also what the two
-// labels of the grid say.
+// The chart has one bar for each hour, coloured by how cheap or expensive the
+// hour is. Prices are measured against a top that leaves some room above the
+// highest one, which is also what the two labels of the grid say. The bars and
+// the hour labels below them are spaced the same, so that each label stays
+// under its bar.
 function renderChart(rows) {
     const top = Math.max(Math.max(...rows.map(row => row.kwh)) / 0.92, minimumTop)
-    const left = index => (index + 0.5) / rows.length * 100
     const height = kwh => kwh / top * 100
-
-    const points = rows.map((row, index) => `${left(index).toFixed(2)} ${(100 - height(row.kwh)).toFixed(2)}`)
-    const line = `M ${points.join(' L ')}`
-
-    chartLine.setAttribute('d', line)
-    chartArea.setAttribute('d', `${line} L ${left(rows.length - 1).toFixed(2)} 100 L ${left(0).toFixed(2)} 100 Z`)
 
     yMax.textContent = formatPrice(top)
     yMid.textContent = formatPrice(top / 2)
 
-    chartDots.innerHTML = rows
-        .map((row, index) => `<div class="dot ${row.level}${row.isNow ? ' now' : ''}" title="${row.range} · ${formatPrice(row.kwh)} €/kWh" style="left: ${left(index)}%; bottom: ${height(row.kwh)}%"></div>`)
+    chartBars.innerHTML = rows
+        .map(row => `<div class="bar ${row.level}${row.isNow ? ' now' : ''}" title="${row.range} · ${formatPrice(row.kwh)} €/kWh" style="height: ${height(row.kwh).toFixed(2)}%"></div>`)
         .join('')
 
     // One label every three hours, so that they do not pile up on a narrow
@@ -135,18 +130,36 @@ function renderChart(rows) {
         .map((row, index) => `<span class="${row.isNow ? 'now' : ''}">${index % 3 === 0 ? row.hour : ''}</span>`)
         .join('')
 
-    renderNowLine(rows, left)
+    fitBars()
+
+    const now = rows.find(row => row.isNow)
+
+    nowLegend.textContent = now === undefined ? '' : `▼ = hora actual (${now.hour}:00)`
 }
 
-function renderNowLine(rows, left) {
-    const index = rows.findIndex(row => row.isNow)
+// A bar whose edges fall between two screen pixels is painted blurred, and the
+// gaps around it look wider or narrower than the rest. So the bars and the gaps
+// get a whole number of screen pixels, the first bar starts on a whole pixel,
+// and the few pixels left over are shared at both sides of the chart.
+function fitBars() {
+    const hours = chartBars.children.length
 
-    nowLine.hidden = index < 0
-    nowLegend.textContent = index < 0 ? '' : `Línea discontinua = hora actual (${rows[index].hour}:00)`
-
-    if (index >= 0) {
-        nowLine.style.left = `${left(index)}%`
+    if (hours === 0 || chart.clientWidth === 0) {
+        return
     }
+
+    const ratio = window.devicePixelRatio || 1
+    const left = chart.getBoundingClientRect().left * ratio
+    const width = chart.clientWidth * ratio
+    const gap = Math.max(1, Math.round(barGap * ratio))
+    const bar = Math.floor((width - gap * (hours - 1)) / hours)
+    const spare = width - bar * hours - gap * (hours - 1)
+    const offset = Math.round(left + spare / 2) - left
+
+    chartSection.style.setProperty('--hours', hours)
+    chartSection.style.setProperty('--bar-width', `${bar / ratio}px`)
+    chartSection.style.setProperty('--bar-gap', `${gap / ratio}px`)
+    chartSection.style.setProperty('--bar-offset', `${offset / ratio}px`)
 }
 
 // The hours are read in two columns, the first half of the day next to the
@@ -486,6 +499,7 @@ regionSelector.addEventListener('change', () => goToRegion(findRegion(regionSele
 viewButtons.forEach(button => button.addEventListener('click', () => selectView(button.dataset.view)))
 themeButton.addEventListener('click', cycleTheme)
 window.addEventListener('popstate', applyUrl)
+new ResizeObserver(fitBars).observe(chart)
 
 // The hour being lived changes while the page is open, so whatever marks it is
 // repainted every minute.
