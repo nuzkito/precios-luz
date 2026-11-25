@@ -12,3 +12,8 @@ services:
       - ./_site:/site:ro
     ports:
       - '3000:3000'
+
+  browsers:
+    image: nuzkito/browsers
+    depends_on:
+      - server
