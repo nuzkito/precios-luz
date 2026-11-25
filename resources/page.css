@@ -352,13 +352,16 @@ select.control:hover {
     gap: 0 40px;
 }
 .table-column {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-content: start;
 }
 .table-head,
 .table-row {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    column-gap: 14px;
     align-items: center;
     border-bottom: 1px solid var(--line);
 }
@@ -370,6 +373,7 @@ select.control:hover {
     color: var(--muted);
 }
 .table-row {
+    position: relative;
     padding: 5px 10px;
     border-radius: 6px;
     font-size: 13px;
@@ -382,20 +386,32 @@ select.control:hover {
     color: var(--muted);
 }
 .table-row .price {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    text-align: right;
     font-family: var(--mono);
     font-size: 13px;
     font-weight: 600;
     color: var(--level);
 }
-.table-row .price::before {
-    content: '';
-    width: 8px;
+.price-bar {
+    display: block;
     height: 8px;
-    border-radius: 50%;
+}
+.price-bar span {
+    display: block;
+    height: 100%;
+    min-width: 1px;
+    border-radius: 0 3px 3px 0;
     background: var(--level);
+}
+.table-row.now::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-width: 0;
+    border-left: 6px solid var(--level);
 }
 
 .source {

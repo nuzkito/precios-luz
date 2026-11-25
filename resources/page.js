@@ -158,22 +158,27 @@ function fitBars() {
 }
 
 // The hours are read in two columns, the first half of the day next to the
-// second one.
+// second one. Each price also has a bar, measured against the most expensive
+// hour of the day, so that both columns share the same scale.
 function renderTable(rows) {
     const half = Math.ceil(rows.length / 2)
+    const highest = Math.max(...rows.map(row => row.kwh))
 
     priceTable.innerHTML = [rows.slice(0, half), rows.slice(half)]
-        .map(column => `<div class="table-column">${tableHead()}${column.map(tableRow).join('')}</div>`)
+        .map(column => `<div class="table-column">${tableHead()}${column.map(row => tableRow(row, highest)).join('')}</div>`)
         .join('')
 }
 
 function tableHead() {
-    return '<div class="table-head"><span>Hora</span><span>€/kWh</span></div>'
+    return '<div class="table-head"><span>Hora</span><span></span><span>€/kWh</span></div>'
 }
 
-function tableRow(row) {
-    return `<div class="table-row ${row.level}${row.isNow ? ' now' : ''}">`
-        + `<span class="hour">${row.range}${row.isNow ? ' · ahora' : ''}</span>`
+function tableRow(row, highest) {
+    const width = highest > 0 ? Math.max(row.kwh, 0) / highest * 100 : 0
+
+    return `<div class="table-row ${row.level}${row.isNow ? ' now' : ''}"${row.isNow ? ' title="Hora actual" aria-current="time"' : ''}>`
+        + `<span class="hour">${row.range}</span>`
+        + `<span class="price-bar" aria-hidden="true"><span style="width: ${width.toFixed(2)}%"></span></span>`
         + `<span class="price">${formatPrice(row.kwh)}</span>`
         + '</div>'
 }
