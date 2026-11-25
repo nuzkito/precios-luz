@@ -58,6 +58,18 @@ docker compose up --detach server
 
 La web se publica en http://localhost:3000, con la tabla y la gráfica de los días del histórico. Tras descargar precios nuevos hay que lanzar `npm run build` para verlos.
 
+Para probar la web en otros navegadores, el servicio `browsers` incluye Chromium y Firefox. Desde ese contenedor la web está en http://server:3000:
+
+```sh
+docker compose run --rm browsers sh
+```
+
+El servidor se levanta solo al usar `browsers`. Este ejemplo muestra el HTML que genera Chromium sin abrir ninguna ventana. La variable `LANG` hace que el navegador use el idioma y el formato de España, por ejemplo en el selector de fecha:
+
+```sh
+docker compose run --rm -e LANG=es_ES.UTF-8 browsers chromium --headless --no-sandbox --dump-dom http://server:3000
+```
+
 Para apagar el servidor:
 
 ```sh
