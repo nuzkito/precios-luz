@@ -15,17 +15,12 @@ on:
     paths-ignore:
       - 'data/**'
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 jobs:
   update-prices:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: write
+      pages: read
 
     steps:
       - name: Checkout repository
@@ -63,6 +58,17 @@ jobs:
         with:
           path: '_site'
 
+  deploy:
+    needs: update-prices
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
