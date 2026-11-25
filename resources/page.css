@@ -75,10 +75,10 @@
     --space-6: 32px;
     --section-gap: var(--space-6);
     --card-padding: var(--space-5);
-    /* The column at the left of the chart that holds the price labels: six
+    /* The column at the left of the chart that holds the price labels: four
        characters of the font of the labels, which every element that uses it
-       must have, and a small space. */
-    --axis-width: calc(6ch + var(--space-2));
+       must have, and a space before the first bar. */
+    --axis-width: calc(4ch + var(--space-3));
     --axis-font-size: 13px;
 }
 
@@ -561,6 +561,11 @@ select.control:hover {
     }
     .chart {
         height: 180px;
+    }
+    .hour-labels span {
+        justify-self: center;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
     }
     .table {
         grid-template-columns: 1fr;

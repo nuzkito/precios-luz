@@ -3,7 +3,7 @@ const anHour = 60 * 60 * 1000
 
 // The chart never reaches less than this price, so that a cheap day is drawn
 // low and an expensive one high instead of every day filling the same height.
-const minimumTop = 0.4
+const minimumTop = 0.5
 
 // The space between two bars, in CSS pixels.
 const barGap = 3
@@ -111,17 +111,17 @@ function renderChart(rows) {
     const top = Math.max(Math.max(...rows.map(row => row.kwh)) / 0.92, minimumTop)
     const height = kwh => kwh / top * 100
 
-    yMax.textContent = formatPrice(top)
-    yMid.textContent = formatPrice(top / 2)
+    yMax.textContent = formatAxisPrice(top)
+    yMid.textContent = formatAxisPrice(top / 2)
 
     chartBars.innerHTML = rows
         .map(row => `<div class="bar ${row.level}${row.isNow ? ' now' : ''}" title="${row.range} · ${formatPrice(row.kwh)} €/kWh" style="height: ${height(row.kwh).toFixed(2)}%"></div>`)
         .join('')
 
-    // One label every three hours, so that they do not pile up on a narrow
-    // screen.
+    // Every hour has its label. On a narrow screen they are turned upright, so
+    // that they fit under their bars without piling up.
     hourLabels.innerHTML = rows
-        .map((row, index) => `<span class="${row.isNow ? 'now' : ''}">${index % 3 === 0 ? row.hour : ''}</span>`)
+        .map(row => `<span class="${row.isNow ? 'now' : ''}">${row.hour}</span>`)
         .join('')
 
     fitBars()
@@ -465,6 +465,11 @@ function formatTime(instant) {
 
 function formatPrice(kwh) {
     return kwh.toFixed(4).replace('.', ',')
+}
+
+// The labels of the chart only mark the scale, so two decimals are enough.
+function formatAxisPrice(kwh) {
+    return kwh.toFixed(2).replace('.', ',')
 }
 
 // Prices are stored in mainland time. The Canary Islands show those same hours
