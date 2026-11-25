@@ -172,15 +172,32 @@ a:hover {
     border: 2px solid var(--line);
     padding: var(--card-padding);
 }
-/* The title of a card is a bar across its top, closed by the same strong line
-   as the head of the table. */
-.card h2 {
+/* The head of a card is a bar across its top, closed by the same strong line
+   as the head of the table. It holds the title and, at its right, the selector
+   of what the card shows, which goes below the title when they do not fit. */
+.card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-4);
     margin: calc(var(--card-padding) * -1) calc(var(--card-padding) * -1) var(--card-padding);
-    padding: var(--space-4) var(--card-padding);
+    padding: var(--space-3) var(--card-padding);
     border-bottom: 2px solid var(--muted);
+}
+.card h2 {
+    margin: 0;
     font-size: 20px;
     font-stretch: 87.5%;
     letter-spacing: 0.04em;
+}
+/* In the head the selector is smaller than the controls of the page, so that
+   it does not make the head taller than the title needs. */
+.card-head .segmented {
+    height: 40px;
+}
+.card-head .segmented button {
+    font-size: 16px;
 }
 
 button,
@@ -253,9 +270,6 @@ select.control:hover {
 .arrow:disabled {
     color: color-mix(in oklab, var(--line), var(--muted));
     cursor: default;
-}
-.view-selector {
-    margin-left: auto;
 }
 .segmented {
     display: flex;
@@ -506,7 +520,16 @@ select.control:hover {
     color: var(--muted);
 }
 .legend .now-legend::before {
-    content: none;
+    width: 0;
+    height: 0;
+    border: 5px solid transparent;
+    border-bottom-width: 0;
+    border-top: 6px solid currentColor;
+}
+.legend .now-legend[data-view="table"]::before {
+    border: 5px solid transparent;
+    border-right-width: 0;
+    border-left: 6px solid currentColor;
 }
 
 .table {
@@ -650,13 +673,6 @@ select.control:hover {
     }
     .day-selector {
         flex-basis: 100%;
-    }
-    .view-selector {
-        margin-left: 0;
-        width: 100%;
-    }
-    .view-selector button {
-        flex: 1;
     }
     .now-price {
         font-size: 30px;

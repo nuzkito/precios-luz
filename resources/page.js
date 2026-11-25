@@ -16,9 +16,9 @@ const regions = [
     { id: 'melilla', label: 'Melilla', timeZone: mainlandTimeZone }
 ]
 
-// What the page can be shown as: the chart, the table, or both of them.
+// What the page can be shown as: the chart or the table. The first one is
+// shown when none was chosen, or when the one remembered no longer exists.
 const views = [
-    { id: 'both', chart: true, table: true },
     { id: 'chart', chart: true, table: false },
     { id: 'table', chart: false, table: true }
 ]
@@ -41,6 +41,9 @@ let dates = []
 let currentDay = null
 let currentRegion = defaultRegion
 let builtAt = null
+let currentView = null
+// The hour going on, while the day shown is today.
+let nowHour = null
 
 const dayInfo = document.getElementById('dayInfo')
 const dayError = document.getElementById('dayError')
@@ -50,10 +53,9 @@ const nextDay = document.getElementById('nextDay')
 const regionSelector = document.getElementById('regionSelector')
 const viewButtons = [...document.getElementById('viewSelector').children]
 const themeButtons = [...document.getElementById('themeSelector').children]
-const chartSection = document.getElementById('chartSection')
-const tableSection = document.getElementById('tableSection')
-const chartRegion = document.getElementById('chartRegion')
-const tableRegion = document.getElementById('tableRegion')
+const chartView = document.getElementById('chartView')
+const tableView = document.getElementById('tableView')
+const pricesRegion = document.getElementById('pricesRegion')
 const chartBars = document.getElementById('chartBars')
 const hourLabels = document.getElementById('hourLabels')
 const nowLegend = document.getElementById('nowLegend')
@@ -126,9 +128,19 @@ function renderChart(rows) {
 
     fitBars()
 
-    const now = rows.find(row => row.isNow)
+    nowHour = rows.find(row => row.isNow)?.hour ?? null
 
-    nowLegend.textContent = now === undefined ? '' : `▼ = hora actual (${now.hour}:00)`
+    renderNowLegend()
+}
+
+// The current hour is marked by a triangle above its bar in the chart and at
+// the left of its row in the table, so the legend draws the one of the view
+// being shown. It is drawn by the page and not written as a character, which
+// some fonts lack and some systems turn into a coloured emoji.
+function renderNowLegend() {
+    nowLegend.hidden = nowHour === null
+    nowLegend.dataset.view = currentView?.id ?? ''
+    nowLegend.textContent = `= hora actual (${nowHour}:00)`
 }
 
 // A bar whose edges fall between two screen pixels is painted blurred, and the
@@ -151,10 +163,10 @@ function fitBars() {
     const spare = width - bar * hours - gap * (hours - 1)
     const offset = Math.round(left + spare / 2) - left
 
-    chartSection.style.setProperty('--hours', hours)
-    chartSection.style.setProperty('--bar-width', `${bar / ratio}px`)
-    chartSection.style.setProperty('--bar-gap', `${gap / ratio}px`)
-    chartSection.style.setProperty('--bar-offset', `${offset / ratio}px`)
+    chartView.style.setProperty('--hours', hours)
+    chartView.style.setProperty('--bar-width', `${bar / ratio}px`)
+    chartView.style.setProperty('--bar-gap', `${gap / ratio}px`)
+    chartView.style.setProperty('--bar-offset', `${offset / ratio}px`)
 }
 
 // The hours are read in two columns, the first half of the day next to the
@@ -290,20 +302,21 @@ function showDayError() {
 function selectRegion(region) {
     currentRegion = region
     regionSelector.value = region.id
-    chartRegion.textContent = region.label
-    tableRegion.textContent = region.label
+    pricesRegion.textContent = region.label
 
     renderPrices()
 }
 
-// Whether the chart, the table or both are shown. It is a way of reading the
+// Whether the chart or the table is shown. It is a way of reading the
 // same day, so it is kept in the browser and not in the url, which only records
 // which prices are being shown.
 function selectView(id) {
     const view = views.find(view => view.id === id) ?? views[0]
 
-    chartSection.hidden = !view.chart
-    tableSection.hidden = !view.table
+    currentView = view
+
+    chartView.hidden = !view.chart
+    tableView.hidden = !view.table
 
     viewButtons.forEach(button => {
         const selected = button.dataset.view === view.id
@@ -312,6 +325,7 @@ function selectView(id) {
         button.setAttribute('aria-pressed', selected)
     })
 
+    renderNowLegend()
     remember('vista', view.id)
 }
 

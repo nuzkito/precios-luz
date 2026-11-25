@@ -36,11 +36,6 @@
                     <button type="button" id="nextDay" class="control arrow" title="Día siguiente" disabled>›</button>
                 </div>
                 <select id="regionSelector" class="control" aria-label="Zona"></select>
-                <div class="segmented view-selector" id="viewSelector" role="group" aria-label="Vista">
-                    <button type="button" data-view="both">Gráfica y tabla</button>
-                    <button type="button" data-view="chart">Gráfica</button>
-                    <button type="button" data-view="table">Tabla</button>
-                </div>
             </div>
 
             <p id="dayInfo" class="day-info">Cargando los precios…</p>
@@ -54,28 +49,38 @@
                 <span id="nowLevel" class="badge"></span>
             </section>
 
-            <section id="chartSection" class="card">
-                <h2>Gráfica · <span id="chartRegion"></span></h2>
-                <div class="chart">
-                    <div class="chart-grid">
-                        <div id="yMax"></div>
-                        <div id="yMid"></div>
-                        <div></div>
+            <!-- The chart and the table show the same prices, so they share one card,
+                 and the selector in its head chooses which of them is shown. -->
+            <section class="card">
+                <div class="card-head">
+                    <h2>Precios · <span id="pricesRegion"></span></h2>
+                    <div class="segmented view-selector" id="viewSelector" role="group" aria-label="Vista">
+                        <button type="button" data-view="chart">Gráfica</button>
+                        <button type="button" data-view="table">Tabla</button>
                     </div>
-                    <div id="chartBars" class="chart-bars"></div>
                 </div>
-                <div class="hour-labels" id="hourLabels"></div>
+                <div id="chartView">
+                    <div class="chart">
+                        <div class="chart-grid">
+                            <div id="yMax"></div>
+                            <div id="yMid"></div>
+                            <div></div>
+                        </div>
+                        <div id="chartBars" class="chart-bars"></div>
+                    </div>
+                    <div class="hour-labels" id="hourLabels"></div>
+                </div>
+                <div id="tableView" hidden>
+                    <div class="table" id="priceTable"></div>
+                </div>
+                <!-- The chart and the table mark the levels and the current hour in
+                     the same way, so they share the legend. -->
                 <div class="legend">
                     <span class="low">Barata</span>
                     <span class="medium">Media</span>
                     <span class="high">Cara</span>
-                    <span class="now-legend" id="nowLegend"></span>
+                    <span class="now-legend" id="nowLegend" hidden></span>
                 </div>
-            </section>
-
-            <section id="tableSection" class="card">
-                <h2>Tabla · <span id="tableRegion"></span></h2>
-                <div class="table" id="priceTable"></div>
             </section>
 
             <!-- The theme goes after the prices, which are what the page is read
