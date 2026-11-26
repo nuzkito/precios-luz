@@ -45,8 +45,8 @@ let currentView = null
 // The hour going on, while the day shown is today.
 let nowHour = null
 
-const dayInfo = document.getElementById('dayInfo')
 const dayError = document.getElementById('dayError')
+const updateInfo = document.getElementById('updateInfo')
 const daySelector = document.getElementById('daySelector')
 const previousDay = document.getElementById('previousDay')
 const nextDay = document.getElementById('nextDay')
@@ -198,8 +198,6 @@ function tableRow(row, highest) {
 // What depends on the day and not on the region.
 function renderDay() {
     document.title = `Precios de la luz - ${formatDate(currentDay.date)}`
-    dayInfo.textContent = `Fecha: ${formatDate(currentDay.date)}${buildInfo()}`
-    dayInfo.hidden = false
     daySelector.value = currentDay.date
     previousDay.disabled = !neighbourDate(-1)
     nextDay.disabled = !neighbourDate(1)
@@ -215,11 +213,12 @@ function neighbourDate(offset) {
 }
 
 // When the site was published, which is what the page reports as its update
-// time. It says nothing about the prices, which the API publishes the evening
-// before at a time that never changes: it tells whether the page being read is
-// the one of today or an old one kept by the browser.
-function buildInfo() {
-    return builtAt === null ? '' : ` (Actualizado a las ${formatTime(builtAt)})`
+// time, below the prices. It says nothing about the prices, which the API
+// publishes the evening before at a time that never changes: it tells whether
+// the page being read is the one of today or an old one kept by the browser.
+function showBuildInfo() {
+    updateInfo.textContent = `Última actualización el ${formatInstantDate(builtAt)} a las ${formatTime(builtAt)}`
+    updateInfo.hidden = builtAt === null
 }
 
 // The stored days, used by the arrows and by the limits of the date input, and
@@ -291,12 +290,6 @@ async function showDay(date) {
 function showDayError() {
     dayError.hidden = false
     daySelector.value = currentDay?.date ?? ''
-
-    if (currentDay === null) {
-        // Hidden, and not only emptied, so that it leaves no gap above the
-        // error.
-        dayInfo.hidden = true
-    }
 }
 
 function selectRegion(region) {
@@ -468,6 +461,15 @@ function formatDate(date) {
     return `${dayOfMonth}/${month}/${year}`
 }
 
+function formatInstantDate(instant) {
+    return new Intl.DateTimeFormat('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        timeZone: mainlandTimeZone
+    }).format(new Date(instant))
+}
+
 function formatTime(instant) {
     return new Intl.DateTimeFormat('es-ES', {
         hour: '2-digit',
@@ -538,6 +540,7 @@ const site = await loadSite()
 
 dates = site.dates ?? []
 builtAt = site.builtAt ?? null
+showBuildInfo()
 daySelector.min = dates[0] ?? ''
 daySelector.max = dates.at(-1) ?? ''
 
