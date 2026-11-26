@@ -29,17 +29,6 @@
                 <p class="subtitle">España · €/kWh por hora</p>
             </header>
 
-            <div class="controls">
-                <div class="day-selector">
-                    <button type="button" id="previousDay" class="control arrow" title="Día anterior" disabled>‹</button>
-                    <input type="date" id="daySelector" class="control">
-                    <button type="button" id="nextDay" class="control arrow" title="Día siguiente" disabled>›</button>
-                </div>
-                <select id="regionSelector" class="control" aria-label="Zona"></select>
-            </div>
-
-            <p id="dayError" class="error" hidden>No hay precios guardados para ese día.</p>
-
             <section id="nowPanel" class="card now-panel" hidden>
                 <div>
                     <span class="now-label">Ahora · <span id="nowRange"></span></span>
@@ -49,15 +38,25 @@
             </section>
 
             <!-- The chart and the table show the same prices, so they share one card,
-                 and the selector in its head chooses which of them is shown. -->
-            <section class="card">
+                 and the selector in its head chooses which of them is shown. The day and
+                 the region choose what prices they show, so they are in the head too, in
+                 place of a title. -->
+            <section class="card" aria-label="Precios">
                 <div class="card-head">
-                    <h2>Precios · <span id="pricesRegion"></span></h2>
+                    <div class="controls">
+                        <div class="day-selector">
+                            <button type="button" id="previousDay" class="control arrow" title="Día anterior" disabled>‹</button>
+                            <input type="date" id="daySelector" class="control">
+                            <button type="button" id="nextDay" class="control arrow" title="Día siguiente" disabled>›</button>
+                        </div>
+                        <select id="regionSelector" class="control" aria-label="Zona"></select>
+                    </div>
                     <div class="segmented view-selector" id="viewSelector" role="group" aria-label="Vista">
                         <button type="button" data-view="chart">Gráfica</button>
                         <button type="button" data-view="table">Tabla</button>
                     </div>
                 </div>
+                <p id="dayError" class="error" hidden>No hay precios guardados para ese día.</p>
                 <div id="chartView">
                     <div class="chart">
                         <div class="chart-grid">

@@ -55,7 +55,6 @@ const viewButtons = [...document.getElementById('viewSelector').children]
 const themeButtons = [...document.getElementById('themeSelector').children]
 const chartView = document.getElementById('chartView')
 const tableView = document.getElementById('tableView')
-const pricesRegion = document.getElementById('pricesRegion')
 const chartBars = document.getElementById('chartBars')
 const hourLabels = document.getElementById('hourLabels')
 const nowLegend = document.getElementById('nowLegend')
@@ -295,8 +294,6 @@ function showDayError() {
 function selectRegion(region) {
     currentRegion = region
     regionSelector.value = region.id
-    pricesRegion.textContent = region.label
-
     renderPrices()
 }
 

@@ -146,15 +146,12 @@ a:hover {
     grid-row: 1;
     align-self: end;
 }
-/* The titles are set in condensed capitals, and the subtitle in the font of
+/* The title is set in condensed capitals, and the subtitle in the font of
    the numbers. */
-.header h1,
-.card h2 {
+.header h1 {
     font-weight: 800;
     font-stretch: 75%;
     text-transform: uppercase;
-}
-.header h1 {
     margin: 0;
     font-size: 34px;
     line-height: 1.05;
@@ -173,8 +170,9 @@ a:hover {
     padding: var(--card-padding);
 }
 /* The head of a card is a bar across its top, closed by the same strong line
-   as the head of the table. It holds the title and, at its right, the selector
-   of what the card shows, which goes below the title when they do not fit. */
+   as the head of the table. It holds the day and the region and, at its right,
+   the selector of what the card shows, which goes below them when they do not
+   fit. */
 .card-head {
     display: flex;
     flex-wrap: wrap;
@@ -184,20 +182,6 @@ a:hover {
     margin: calc(var(--card-padding) * -1) calc(var(--card-padding) * -1) var(--card-padding);
     padding: var(--space-3) var(--card-padding);
     border-bottom: 2px solid var(--muted);
-}
-.card h2 {
-    margin: 0;
-    font-size: 20px;
-    font-stretch: 87.5%;
-    letter-spacing: 0.04em;
-}
-/* In the head the selector is smaller than the controls of the page, so that
-   it does not make the head taller than the title needs. */
-.card-head .segmented {
-    height: 40px;
-}
-.card-head .segmented button {
-    font-size: 16px;
 }
 
 button,
@@ -235,11 +219,28 @@ select.control:hover {
     outline-offset: 2px;
 }
 
+/* The day and the region take the width they need while they fit in one line
+   with the selector of the view. When they do not, they take the whole width
+   of the head and grow to fill it, side by side or one below the other. */
 .controls {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--space-3);
+}
+.controls > * {
+    flex: 1 1 auto;
+}
+/* The limit is the width of the day, the region and the view in one line,
+   about 620px, with some room for a font that is a little wider. A flex line
+   cannot tell its items that it has wrapped, so it is measured here. */
+.card-head {
+    container-type: inline-size;
+}
+@container (max-width: 640px) {
+    .card-head .controls {
+        flex-basis: 100%;
+    }
 }
 /* The arrows and the date are one box: each one overlaps the border of the one
    before it, and the one being hovered or focused is drawn on top. */
@@ -295,10 +296,10 @@ select.control:hover {
     color: var(--panel);
 }
 
-/* The error belongs to the controls, so it sits right below them instead of a
-   whole section apart. */
-.error {
-    margin: calc(var(--space-2) - var(--section-gap)) 0 0;
+/* The error belongs to the day and the region, so it sits right below the
+   head of the card that holds them. */
+.card .error {
+    margin: calc(var(--space-2) - var(--card-padding)) 0 var(--card-padding);
 }
 /* The update time belongs to the prices, so it sits right below their card. */
 .update-info {
@@ -668,12 +669,6 @@ select.control:hover {
     }
     .source {
         margin-top: calc(var(--space-2) - var(--section-gap));
-    }
-    .controls > * {
-        flex: 1 1 auto;
-    }
-    .day-selector {
-        flex-basis: 100%;
     }
     .now-price {
         font-size: 30px;
