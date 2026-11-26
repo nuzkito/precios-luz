@@ -11,7 +11,7 @@ services:
     volumes:
       - ./_site:/site:ro
     ports:
-      - '3000:3000'
+      - '3595:3000'
 
   browsers:
     image: nuzkito/browsers
